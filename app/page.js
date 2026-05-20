@@ -28,6 +28,8 @@ const introPrefixes = [
   'NFC',
   'VX'
 ];
+const destructStages = ['PURGING VICTOR ARCHIVE INDEX...','DELETING OFFSHORE NODE MAP...','WIPING CRIMINAL LEDGER CACHE...','SCRAMBLING BIOMETRIC KEY...','DESTROYING INHERITANCE ACCESS TOKEN...','SEALING DEAD MAN SWITCH...'];
+const destructBars = ['DATA PURGE', 'KEY DESTRUCTION', 'LEDGER WIPE', 'SYSTEM COLLAPSE'];
 
 const hexChunk = (len) => Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
 
@@ -55,6 +57,11 @@ export default function Home() {
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [selfDestructActive, setSelfDestructActive] = useState(false);
+  const [destructComplete, setDestructComplete] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const [destructLogs, setDestructLogs] = useState(() => Array.from({ length: 30 }, (_, i) => makeLogLine(i + 40)));
+  const [destructBarsState, setDestructBarsState] = useState({ 'DATA PURGE': 0, 'KEY DESTRUCTION': 0, 'LEDGER WIPE': 0, 'SYSTEM COLLAPSE': 0 });
 
   const audioCtxRef = useRef(null);
   const humRef = useRef(null);
@@ -276,8 +283,30 @@ export default function Home() {
     if (status === 'denied') {
       playTone(220, 0.13, 0.02, 'sawtooth');
       setTimeout(() => playTone(180, 0.14, 0.016, 'square'), 120);
+      const timer = setTimeout(() => setSelfDestructActive(true), 1000);
+      return () => clearTimeout(timer);
     }
   }, [status]);
+
+  useEffect(() => {
+    if (!selfDestructActive || destructComplete) return;
+    const ct = setInterval(() => setCountdown((prev) => Math.max(0, prev - 1)), 1000);
+    const lt = setInterval(() => setDestructLogs((prev) => [...prev.slice(-65), makeLogLine(prev.length + 90)]), 80);
+    const bt = setInterval(() => setDestructBarsState((prev) => ({
+      'DATA PURGE': Math.min(100, prev['DATA PURGE'] + 6),
+      'KEY DESTRUCTION': Math.min(100, prev['KEY DESTRUCTION'] + 7),
+      'LEDGER WIPE': Math.min(100, prev['LEDGER WIPE'] + 8),
+      'SYSTEM COLLAPSE': Math.min(100, prev['SYSTEM COLLAPSE'] + 9)
+    })), 110);
+    return () => { clearInterval(ct); clearInterval(lt); clearInterval(bt); };
+  }, [selfDestructActive, destructComplete]);
+
+  useEffect(() => {
+    if (selfDestructActive && countdown === 0 && !destructComplete) {
+      setDestructComplete(true);
+      playTone(140, 0.25, 0.03, 'sawtooth');
+    }
+  }, [selfDestructActive, countdown, destructComplete]);
 
   useEffect(() => () => {
     const hum = humRef.current;
@@ -300,8 +329,20 @@ export default function Home() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setStatus('idle');
+    setSelfDestructActive(false);
+    setDestructComplete(false);
+    setCountdown(10);
+    setDestructBarsState({ 'DATA PURGE': 0, 'KEY DESTRUCTION': 0, 'LEDGER WIPE': 0, 'SYSTEM COLLAPSE': 0 });
     setScanProgress(0);
     setScanning(true);
+  };
+  const resetProp = () => {
+    setStatus('idle');
+    setPassword('');
+    setSelfDestructActive(false);
+    setDestructComplete(false);
+    setCountdown(10);
+    setDestructBarsState({ 'DATA PURGE': 0, 'KEY DESTRUCTION': 0, 'LEDGER WIPE': 0, 'SYSTEM COLLAPSE': 0 });
   };
 
   return (
@@ -410,6 +451,18 @@ export default function Home() {
           </section>
         )}
       </section>
+      {selfDestructActive && (
+        <section className={`destruct-overlay ${destructComplete ? 'complete' : ''}`}>
+          <h1 className="glitch" data-text="SECURITY BREACH DETECTED">SECURITY BREACH DETECTED</h1>
+          <h2>UNAUTHORIZED BIOMETRIC SIGNATURE</h2>
+          <p className="destruct-countdown">T-MINUS {countdown}s</p>
+          <div className="destruct-stage-list">{destructStages.map((line) => <p key={line}>{line}</p>)}</div>
+          <div className="destruct-bars">{destructBars.map((bar) => <div key={bar}><label>{bar} {destructBarsState[bar]}%</label><div className="progress-track"><div className="progress-fill danger" style={{ width: `${destructBarsState[bar]}%` }} /></div></div>)}</div>
+          <div className="destruct-feed">{destructLogs.map((line, idx) => <p key={`${line}-${idx}`}>{line}</p>)}</div>
+          {destructComplete && <div className="destruct-final"><h3>ARCHIVE DESTROYED</h3><p>CONNECTION TERMINATED</p></div>}
+          <button type="button" className="reset-prop" onClick={resetProp}>RESET PROP</button>
+        </section>
+      )}
     </main>
   );
 }
