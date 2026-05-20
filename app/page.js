@@ -150,7 +150,7 @@ export default function Home() {
   };
   const handleMapVideoError = () => {
     // Film-prop fallback: keep HUD running and fall back to static map if video fails.
-    console.error('Global routing background video failed to load: /data/gemini_generated_video_86717de7.mp4');
+    console.error('Global routing background video failed to load for the current viewport.');
     setMapVideoFailed(true);
   };
 
@@ -364,17 +364,30 @@ export default function Home() {
           <div className="map-grid">
             <div className="map-globe">
               {!mapVideoFailed && (
-                <video
-                  className="map-bg-video"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  onError={handleMapVideoError}
-                >
-                  <source src="/data/gemini_generated_video_86717de7.mp4" type="video/mp4" />
-                </video>
+                <>
+                  <video
+                    className="map-bg-video map-bg-video-portrait"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    onError={handleMapVideoError}
+                  >
+                    <source src="/data/gemini_generated_video_86717de7.mp4" type="video/mp4" />
+                  </video>
+                  <video
+                    className="map-bg-video map-bg-video-landscape"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    onError={handleMapVideoError}
+                  >
+                    <source src="/data/landscape.mp4" type="video/mp4" />
+                  </video>
+                </>
               )}
             </div>
             <div className="map-terminal">
