@@ -328,20 +328,6 @@ export default function Home() {
           <div className="map-grid">
             <div className="map-globe">
               <div className="map-haze" />
-              <svg className="world-svg" viewBox="0 0 1000 540" preserveAspectRatio="none" aria-hidden="true">
-                <g className="lat-lines">
-                  {[60, 120, 180, 240, 300, 360, 420, 480].map((y) => <line key={`lat-${y}`} x1="0" y1={y} x2="1000" y2={y} />)}
-                  {[100, 200, 300, 400, 500, 600, 700, 800, 900].map((x) => <line key={`lon-${x}`} x1={x} y1="0" x2={x} y2="540" />)}
-                </g>
-                <g className="continent-lines">
-                  <path d="M94 198 L140 150 L208 146 L250 182 L235 230 L187 256 L144 240 L108 230 Z" />
-                  <path d="M254 258 L286 286 L314 336 L301 412 L272 468 L238 450 L220 390 L228 318 Z" />
-                  <path d="M444 144 L520 120 L598 130 L662 168 L628 226 L554 244 L486 208 Z" />
-                  <path d="M546 262 L606 286 L646 352 L622 452 L566 500 L512 472 L488 406 L508 330 Z" />
-                  <path d="M680 194 L736 174 L794 184 L842 220 L824 274 L780 304 L718 290 L678 246 Z" />
-                  <path d="M836 370 L872 398 L866 446 L830 468 L798 444 L806 398 Z" />
-                </g>
-              </svg>
               <div className="map-ring" />
               <div className="map-ring ring-2" />
               <div className="scan-sweep" />
