@@ -49,6 +49,7 @@ const makeLogLine = (idx) => `[${introPrefixes[idx % introPrefixes.length]}] HAS
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
+  const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
   const [showGlobalMap, setShowGlobalMap] = useState(false);
   const [introProgress, setIntroProgress] = useState(0);
   const [mapProgress, setMapProgress] = useState(0);
@@ -74,9 +75,11 @@ export default function Home() {
   const [countdown, setCountdown] = useState(10);
   const [destructLogs, setDestructLogs] = useState(() => Array.from({ length: 30 }, (_, i) => makeLogLine(i + 40)));
   const [destructBarsState, setDestructBarsState] = useState({ 'DATA PURGE': 0, 'KEY DESTRUCTION': 0, 'LEDGER WIPE': 0, 'SYSTEM COLLAPSE': 0 });
+  const [welcomeVideoFailed, setWelcomeVideoFailed] = useState(false);
 
   const audioCtxRef = useRef(null);
   const humRef = useRef(null);
+  const welcomeFallbackTimerRef = useRef(null);
 
   const playTone = (frequency = 540, duration = 0.06, gainValue = 0.022, type = 'sine') => {
     const ctx = audioCtxRef.current;
@@ -193,11 +196,15 @@ export default function Home() {
       setIntroProgress(next);
       if (next >= 100) {
         setShowIntro(false);
-        setShowGlobalMap(true);
+        setShowWelcomeVideo(true);
       }
     }, 90);
     return () => clearInterval(timer);
   }, [showIntro]);
+
+  useEffect(() => () => {
+    if (welcomeFallbackTimerRef.current) clearTimeout(welcomeFallbackTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!showGlobalMap) return;
@@ -221,9 +228,10 @@ export default function Home() {
   useEffect(() => {
     if (!audioEnabled) return;
     if (showIntro) return setHumLevel(0.0085, 0.45);
+    if (showWelcomeVideo) return setHumLevel(0.0098, 0.4);
     if (showGlobalMap) return setHumLevel(0.0115, 0.35);
     setHumLevel(0.0135, 0.55);
-  }, [showIntro, showGlobalMap, audioEnabled]);
+  }, [showIntro, showWelcomeVideo, showGlobalMap, audioEnabled]);
 
   useEffect(() => {
     if (!showIntro) return;
@@ -334,6 +342,19 @@ export default function Home() {
   const bootFeed = useMemo(() => bootLines.slice(0, bootIndex + 1), [bootIndex]);
   const videoSrc = isDesktop ? '/data/landscape.mp4' : '/data/gemini_generated_video_86717de7.mp4';
   const videoSourceLabel = isDesktop ? 'LANDSCAPE' : 'PORTRAIT';
+  const transitionToMap = () => {
+    if (welcomeFallbackTimerRef.current) {
+      clearTimeout(welcomeFallbackTimerRef.current);
+      welcomeFallbackTimerRef.current = null;
+    }
+    setShowWelcomeVideo(false);
+    setShowGlobalMap(true);
+  };
+  const handleWelcomeVideoError = () => {
+    setWelcomeVideoFailed(true);
+    if (welcomeFallbackTimerRef.current) clearTimeout(welcomeFallbackTimerRef.current);
+    welcomeFallbackTimerRef.current = setTimeout(() => transitionToMap(), 5000);
+  };
   const handleSubmit = (e) => {
     e.preventDefault();
     setStatus('idle');
@@ -361,9 +382,34 @@ export default function Home() {
         <div className="intro-shell"><header className="intro-header"><h1 className="glitch" data-text="VICTOR ARCHIVE">VICTOR ARCHIVE</h1><h2>VICTOR VAULT // PRE-ACCESS BOOTSTRAP</h2><span>SAFE MODE + OFFSHORE RELAY + NFC BRIDGE</span></header>
           <div className="intro-terminal"><div className="intro-feed">{introLogs.map((line, idx) => <p key={`${line}-${idx}`}>{line}</p>)}</div><div className="typed-line">&gt; {typedLine}</div><div className="warning-line">! {warningLine}</div><div className="intro-progress-wrap"><div className="intro-progress-bar" style={{ width: `${introProgress}%` }} /></div><p className="intro-progress-label">ARCHIVE INDEXING {introProgress}%</p></div>
         </div>
-        <button className="skip-boot" type="button" onClick={() => { setShowIntro(false); setShowGlobalMap(true); }}>SKIP BOOT</button>
+        <button className="skip-boot" type="button" onClick={() => { setShowIntro(false); setShowWelcomeVideo(true); }}>SKIP BOOT</button>
         <button className="enable-audio" type="button" onClick={handleEnableAudio}>{audioEnabled ? 'AUDIO ONLINE' : 'ENABLE AUDIO'}</button>
       </div>
+
+      {showWelcomeVideo && (
+        <section className="welcome-video-overlay" aria-live="polite">
+          <div className="welcome-video-shell">
+            <video
+              className="victor-welcome-video"
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              onEnded={transitionToMap}
+              onError={handleWelcomeVideoError}
+            >
+              <source src="/data/gemini_generated_video_543d8e3a.mp4" type="video/mp4" />
+            </video>
+            <div className="welcome-video-hud">
+              <p>VICTOR ARCHIVE</p>
+              <p>RECORDED MESSAGE DETECTED</p>
+              <p>PLAYBACK AUTHORIZED</p>
+            </div>
+            {welcomeVideoFailed && <p className="welcome-video-fallback">MESSAGE FEED ERROR :: FAILING OVER TO ROUTING MAP IN 00:05</p>}
+          </div>
+          <button className="skip-message" type="button" onClick={transitionToMap}>SKIP MESSAGE</button>
+        </section>
+      )}
 
       {showGlobalMap && (
         <section className="map-overlay" aria-live="polite">
@@ -412,7 +458,7 @@ export default function Home() {
         </section>
       )}
 
-      {!showIntro && !showGlobalMap && <section className="vault-panel">{/* unchanged main access screen */}
+      {!showIntro && !showWelcomeVideo && !showGlobalMap && <section className="vault-panel">{/* unchanged main access screen */}
         <header className="hero glitch" data-text="VICTOR ARCHIVE"><h1>VICTOR ARCHIVE</h1><p>SECURE INHERITANCE VAULT</p></header>
         <div className="grid-wrap"><div className="boot-module module"><h2>BOOT SEQUENCE</h2><div className="boot-feed">{bootFeed.map((line) => <p key={line}>{line}</p>)}</div></div><div className="handshake module"><h2>ENCRYPTED NODE HANDSHAKE</h2><div className="progress-track"><div className="progress-fill" style={{ width: `${handshake}%` }} /></div><span>{handshake}% COMPLETE</span></div><div className="nfc module gated-module" data-visible={handshakeComplete}><h2>NFC TOKEN DETECTED</h2><p className="tag">AUTH CHIP: V-A7-SAM-KEY</p><p className="tag">SIGNAL INTEGRITY: 99.7%</p><p className="tag">LOCATION LOCK: OFFSHORE NODE 14</p></div><div className="auth module gated-module" data-visible={handshakeComplete}><h2>ACCESS PHRASE</h2><form onSubmit={handleSubmit}><input value={password} onChange={(e) => setPassword(e.target.value.toUpperCase())} placeholder="ENTER PASSWORD" type="password" autoComplete="off" spellCheck="false" /><button type="submit">INITIATE FACIAL SCAN</button></form><div className={`face-scan ${scanning ? 'active' : ''}`}><div className="scan-beam" /><span>{scanning ? `FACIAL RECOGNITION ${scanProgress}%` : 'FACIAL RECOGNITION STANDBY'}</span></div>{status === 'granted' && <p className="result granted">ACCESS GRANTED</p>}{status === 'denied' && <p className="result denied">ACCESS DENIED</p>}</div></div>
         {status === 'granted' && <section className="dashboard module"><h2>ARCHIVE DASHBOARD</h2><ul><li><span>Inheritance File</span><strong>LOCKED</strong></li><li><span>Offshore Accounts</span><strong>ENCRYPTED</strong></li><li><span>Criminal Ledger</span><strong>CLASSIFIED</strong></li><li><span>Biometric Key</span><strong>SAM REQUIRED</strong></li></ul></section>}
