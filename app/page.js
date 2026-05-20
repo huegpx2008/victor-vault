@@ -117,6 +117,11 @@ export default function Home() {
     hum.gain.gain.cancelScheduledValues(ctx.currentTime);
     hum.gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, targetLevel), ctx.currentTime + ramp);
   };
+  const handleMapVideoError = () => {
+    // Film-prop fallback: keep HUD running and fall back to static map if video fails.
+    console.error('Global routing background video failed to load: /data/gemini_generated_video_86717de7.mp4');
+    setMapVideoFailed(true);
+  };
 
   const handleEnableAudio = async () => {
     if (audioEnabled) return;
@@ -336,7 +341,7 @@ export default function Home() {
                   loop
                   playsInline
                   preload="auto"
-                  onError={() => setMapVideoFailed(true)}
+                  onError={handleMapVideoError}
                 >
                   <source src="/data/gemini_generated_video_86717de7.mp4" type="video/mp4" />
                 </video>
