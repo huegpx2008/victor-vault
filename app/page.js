@@ -74,6 +74,7 @@ export default function Home() {
   const [mapPanelLogs, setMapPanelLogs] = useState(() => Array.from({ length: 8 }, (_, i) => `RID-${hexChunk(4)} CLUSTER-${i + 11} ONLINE`));
   const [routingLogs, setRoutingLogs] = useState(baseRoutingLogs);
   const [mapAnalytics, setMapAnalytics] = useState({ pps: 2851, latency: 23.7, integrity: 99.97, active: 10 });
+  const [mapVideoFailed, setMapVideoFailed] = useState(false);
   const [bootIndex, setBootIndex] = useState(0);
   const [handshake, setHandshake] = useState(0);
   const [bootComplete, setBootComplete] = useState(false);
@@ -327,6 +328,19 @@ export default function Home() {
           </header>
           <div className="map-grid">
             <div className="map-globe">
+              {!mapVideoFailed && (
+                <video
+                  className="map-bg-video"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  onError={() => setMapVideoFailed(true)}
+                >
+                  <source src="/data/gemini_generated_video_86717de7.mp4" type="video/mp4" />
+                </video>
+              )}
               <div className="map-haze" />
               <div className="map-ring" />
               <div className="map-ring ring-2" />
