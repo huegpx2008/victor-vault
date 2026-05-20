@@ -32,6 +32,10 @@ const networkStats = [
   ['UPLINKS', '7'],
   ['SATELLITES', '12']
 ];
+const mapCornerInfo = {
+  left: ['SECURE LINK', 'EST. 2017', 'ENCRYPTION AES-256', 'MIL-STD-B10H'],
+  right: ['TRACE MASK ENABLED', '192.168.77.01', 'SESSION ID VAULT-77A', 'LIVE FEED']
+};
 const mapNodes = [
   { label: 'USA ORIGIN NODE', left: 24, top: 34, origin: true },
   { label: 'CAYMAN RELAY', left: 31, top: 46 },
@@ -306,9 +310,11 @@ export default function Home() {
       {showGlobalMap && (
         <section className="map-overlay" aria-live="polite">
           <header className="map-hero">
+            <div className="corner-panel left">{mapCornerInfo.left.map((line) => <span key={line}>{line}</span>)}</div>
             <h1>VICTOR ARCHIVE</h1>
             <h2>GLOBAL OFFSHORE NODE ROUTING</h2>
             <p>Tracing Victor Archive financial relay network</p>
+            <div className="corner-panel right">{mapCornerInfo.right.map((line) => <span key={line}>{line}</span>)}</div>
           </header>
           <div className="map-grid">
             <div className="map-globe">
@@ -327,6 +333,7 @@ export default function Home() {
                 </g>
               </svg>
               <div className="map-ring" />
+              <div className="map-ring ring-2" />
               <div className="scan-sweep" />
               {mapNodes.filter((n) => !n.origin).map((node, index) => {
                 const dx = node.left - mapNodes[0].left;
@@ -358,6 +365,7 @@ export default function Home() {
               <div className="intro-progress-wrap"><div className="intro-progress-bar map-progress" style={{ width: `${mapProgress}%` }} /></div>
               <p className="intro-progress-label">OFFSHORE ROUTE SYNC {mapProgress}%</p>
               {mapProgress >= 100 && <p className="map-complete">ROUTE SYNCHRONIZATION COMPLETE<br />REDIRECTING TO VICTOR ARCHIVE SECURE INTERFACE...</p>}
+              <p className="map-autotransfer">AUTO-TRANSFER IN: {mapProgress >= 100 ? '00:00' : `00:${String(Math.ceil((100 - mapProgress) / 10)).padStart(2, '0')}`}</p>
             </div>
           </div>
         </section>
