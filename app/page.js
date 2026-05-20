@@ -32,10 +32,6 @@ const networkStats = [
   ['UPLINKS', '7'],
   ['SATELLITES', '12']
 ];
-const mapCornerInfo = {
-  left: ['SECURE LINK', 'EST. 2017', 'ENCRYPTION AES-256', 'MIL-STD-B10H'],
-  right: ['TRACE MASK ENABLED', '192.168.77.01', 'SESSION ID VAULT-77A', 'LIVE FEED']
-};
 const baseRoutingLogs = [
   'INITIALIZING GLOBAL ROUTE PROTOCOL...',
   'LOCATING OFFSHORE NODES...',
@@ -43,18 +39,7 @@ const baseRoutingLogs = [
   'ROUTE VERIFIED...',
   'ENCRYPTED CHANNEL ESTABLISHED...'
 ];
-const mapNodes = [
-  { label: 'USA ORIGIN NODE', left: 24, top: 34, origin: true },
-  { label: 'CAYMAN RELAY', left: 31, top: 46 },
-  { label: 'SWISS VAULT', left: 51, top: 31 },
-  { label: 'PANAMA MIRROR', left: 28, top: 51 },
-  { label: 'SINGAPORE LEDGER', left: 78, top: 56 },
-  { label: 'MONACO ESCROW', left: 53, top: 37 },
-  { label: 'BVI SHADOW NODE', left: 34, top: 44 },
-  { label: 'DUBAI HOLDING NODE', left: 62, top: 41 },
-  { label: 'LUXEMBOURG TRUST', left: 49, top: 34 },
-  { label: 'HONG KONG MIRROR', left: 74, top: 47 }
-];
+const mapNodes = ['USA ORIGIN NODE', 'CAYMAN RELAY', 'SWISS VAULT', 'PANAMA MIRROR', 'SINGAPORE LEDGER', 'MONACO ESCROW', 'BVI SHADOW NODE', 'DUBAI HOLDING NODE', 'LUXEMBOURG TRUST', 'HONG KONG MIRROR'];
 const introPrefixes = ['SYS', 'NODE', 'ARC', 'BIO', 'NFC', 'VX'];
 const destructStages = ['PURGING VICTOR ARCHIVE INDEX...', 'DELETING OFFSHORE NODE MAP...', 'WIPING CRIMINAL LEDGER CACHE...', 'SCRAMBLING BIOMETRIC KEY...', 'DESTROYING INHERITANCE ACCESS TOKEN...', 'SEALING DEAD MAN SWITCH...'];
 const destructBars = ['DATA PURGE', 'KEY DESTRUCTION', 'LEDGER WIPE', 'SYSTEM COLLAPSE'];
@@ -71,7 +56,6 @@ export default function Home() {
   const [typedLine, setTypedLine] = useState('');
   const [warningLine, setWarningLine] = useState(introWarnings[0]);
   const [mapStatus, setMapStatus] = useState(mapStatuses[0]);
-  const [mapPanelLogs, setMapPanelLogs] = useState(() => Array.from({ length: 8 }, (_, i) => `RID-${hexChunk(4)} CLUSTER-${i + 11} ONLINE`));
   const [routingLogs, setRoutingLogs] = useState(baseRoutingLogs);
   const [mapAnalytics, setMapAnalytics] = useState({ pps: 2851, latency: 23.7, integrity: 99.97, active: 10 });
   const [mapVideoFailed, setMapVideoFailed] = useState(false);
@@ -171,8 +155,7 @@ export default function Home() {
     }, 90);
     const statusTimer = setInterval(() => {
       setMapStatus(mapStatuses[Math.floor(Math.random() * mapStatuses.length)]);
-      setMapPanelLogs((prev) => [...prev.slice(-10), `RID-${hexChunk(4)} NODE-${hexChunk(2)} ROUTE ${Math.floor(Math.random() * 100)}%`]);
-      setRoutingLogs((prev) => [...prev.slice(-10), `CONNECTING ${mapNodes[1 + Math.floor(Math.random() * 9)].label} :: OK`]);
+      setRoutingLogs((prev) => [...prev.slice(-10), `CONNECTING ${mapNodes[1 + Math.floor(Math.random() * 9)]} :: OK`]);
       setMapAnalytics((prev) => ({ pps: 2500 + Math.floor(Math.random() * 900), latency: Number((20 + Math.random() * 8).toFixed(1)), integrity: Number((99.9 + Math.random() * 0.09).toFixed(2)), active: 10 }));
       playTone(880 + Math.random() * 180, 0.05, 0.01, 'triangle');
     }, 550);
@@ -325,11 +308,9 @@ export default function Home() {
       {showGlobalMap && (
         <section className="map-overlay" aria-live="polite">
           <header className="map-hero">
-            <div className="corner-panel left">{mapCornerInfo.left.map((line) => <span key={line}>{line}</span>)}</div>
             <h1>VICTOR ARCHIVE</h1>
             <h2>GLOBAL OFFSHORE NODE ROUTING</h2>
             <p>Tracing Victor Archive financial relay network</p>
-            <div className="corner-panel right">{mapCornerInfo.right.map((line) => <span key={line}>{line}</span>)}</div>
           </header>
           <div className="map-grid">
             <div className="map-globe">
@@ -346,24 +327,6 @@ export default function Home() {
                   <source src="/data/gemini_generated_video_86717de7.mp4" type="video/mp4" />
                 </video>
               )}
-              <div className="map-haze" />
-              <div className="map-ring" />
-              <div className="map-ring ring-2" />
-              <div className="scan-sweep" />
-              {mapNodes.filter((n) => !n.origin).map((node, index) => {
-                const dx = node.left - mapNodes[0].left;
-                const dy = node.top - mapNodes[0].top;
-                const distance = Math.sqrt((dx ** 2) + (dy ** 2));
-                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-                return (
-                  <div key={`${node.label}-route`} className="route-wrap" style={{ left: `${mapNodes[0].left}%`, top: `${mapNodes[0].top}%`, width: `${distance}%`, transform: `rotate(${angle}deg)`, animationDelay: `${index * 0.35}s` }}>
-                    <span className="route-line" />
-                    <span className="packet" />
-                  </div>
-                );
-              })}
-              {mapNodes.map((node) => <div key={node.label} className={`map-node ${node.origin ? 'origin' : ''}`} style={{ left: `${node.left}%`, top: `${node.top}%` }}><span className="server-box" /><span className="server-led" /><em>{node.label}</em></div>)}
-              <div className="data-particles" />
             </div>
             <div className="map-terminal">
               <p className="map-status">{mapStatus}</p>
@@ -373,8 +336,7 @@ export default function Home() {
               </div>
               <div className="map-lower-panels">
                 <div><h3>ROUTING LOG</h3>{routingLogs.slice(-10).map((line, idx) => <p key={`r-${idx}`}>00:00:{String(idx + 1).padStart(2, '0')} {line}</p>)}</div>
-                <div><h3>ACCOUNT CLUSTERS</h3>{[1,2,3,4,5,6].map((n) => <p key={n}>CLUSTER {String(n).padStart(3, '0')} ${Math.floor(10 + Math.random() * 90).toLocaleString()}, {Math.floor(Math.random()*900000)}.00</p>)}</div>
-                <div><h3>NODE STATUS</h3>{mapNodes.map((n) => <p key={n.label}>{n.label} <strong>ONLINE</strong></p>)}</div>
+                <div><h3>NODE STATUS</h3>{mapNodes.map((n) => <p key={n}>{n} <strong>ONLINE</strong></p>)}</div>
                 <div><h3>ROUTE ENCRYPTION KEY</h3><p>73AF-9C2B-1D4E-8F77-6B2A-9E11</p></div>
               </div>
               <div className="intro-progress-wrap"><div className="intro-progress-bar map-progress" style={{ width: `${mapProgress}%` }} /></div>
