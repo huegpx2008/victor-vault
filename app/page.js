@@ -76,10 +76,12 @@ export default function Home() {
   const [destructLogs, setDestructLogs] = useState(() => Array.from({ length: 30 }, (_, i) => makeLogLine(i + 40)));
   const [destructBarsState, setDestructBarsState] = useState({ 'DATA PURGE': 0, 'KEY DESTRUCTION': 0, 'LEDGER WIPE': 0, 'SYSTEM COLLAPSE': 0 });
   const [welcomeVideoFailed, setWelcomeVideoFailed] = useState(false);
+  const [welcomeVideoNeedsTap, setWelcomeVideoNeedsTap] = useState(false);
 
   const audioCtxRef = useRef(null);
   const humRef = useRef(null);
   const welcomeFallbackTimerRef = useRef(null);
+  const welcomeVideoRef = useRef(null);
 
   const playTone = (frequency = 540, duration = 0.06, gainValue = 0.022, type = 'sine') => {
     const ctx = audioCtxRef.current;
@@ -225,6 +227,24 @@ export default function Home() {
     return () => { clearInterval(progressTimer); clearInterval(statusTimer); };
   }, [showGlobalMap]);
 
+  const isArchiveStage = !showIntro && !showWelcomeVideo && !showGlobalMap;
+
+  useEffect(() => {
+    if (!isArchiveStage) return;
+    setBootIndex(-1);
+    setBootComplete(false);
+    setHandshake(0);
+    setHandshakeComplete(false);
+    setPassword('');
+    setStatus('idle');
+    setScanning(false);
+    setScanProgress(0);
+    setSelfDestructActive(false);
+    setDestructComplete(false);
+    setCountdown(10);
+    setDestructBarsState({ 'DATA PURGE': 0, 'KEY DESTRUCTION': 0, 'LEDGER WIPE': 0, 'SYSTEM COLLAPSE': 0 });
+  }, [isArchiveStage]);
+
   useEffect(() => {
     if (!audioEnabled) return;
     if (showIntro) return setHumLevel(0.0085, 0.45);
@@ -267,14 +287,14 @@ export default function Home() {
   }, [showIntro]);
 
   useEffect(() => {
-    if (showIntro || showGlobalMap || bootComplete) return;
+    if (!isArchiveStage || bootComplete) return;
     if (bootIndex >= bootLines.length - 1) return setBootComplete(true);
     const timer = setTimeout(() => { setBootIndex((prev) => prev + 1); playTerminalClick(174, 3, 0.0096); }, 850);
     return () => clearTimeout(timer);
-  }, [bootIndex, showIntro, showGlobalMap, bootComplete, audioEnabled]);
+  }, [bootIndex, isArchiveStage, bootComplete, audioEnabled]);
 
   useEffect(() => {
-    if (showIntro || showGlobalMap || !bootComplete || handshakeComplete) return;
+    if (!isArchiveStage || !bootComplete || handshakeComplete) return;
     const timer = setInterval(() => setHandshake((prev) => {
       if (prev >= 100) return 100;
       const next = prev + 2;
@@ -283,7 +303,7 @@ export default function Home() {
       return Math.min(100, next);
     }), 80);
     return () => clearInterval(timer);
-  }, [showIntro, showGlobalMap, bootComplete, handshakeComplete, audioEnabled]);
+  }, [isArchiveStage, bootComplete, handshakeComplete, audioEnabled]);
 
   useEffect(() => {
     if (!scanning) return;
@@ -339,7 +359,7 @@ export default function Home() {
     if (ctx) setTimeout(() => ctx.close(), 240);
   }, []);
 
-  const bootFeed = useMemo(() => bootLines.slice(0, bootIndex + 1), [bootIndex]);
+  const bootFeed = useMemo(() => bootLines.slice(0, Math.max(0, bootIndex + 1)), [bootIndex]);
   const videoSrc = isDesktop ? '/data/landscape.mp4' : '/data/gemini_generated_video_86717de7.mp4';
   const videoSourceLabel = isDesktop ? 'LANDSCAPE' : 'PORTRAIT';
   const transitionToMap = () => {
@@ -349,11 +369,34 @@ export default function Home() {
     }
     setShowWelcomeVideo(false);
     setShowGlobalMap(true);
+    setWelcomeVideoNeedsTap(false);
   };
   const handleWelcomeVideoError = () => {
     setWelcomeVideoFailed(true);
     if (welcomeFallbackTimerRef.current) clearTimeout(welcomeFallbackTimerRef.current);
     welcomeFallbackTimerRef.current = setTimeout(() => transitionToMap(), 5000);
+  };
+  const handleWelcomeVideoCanPlay = async () => {
+    if (!showWelcomeVideo || !welcomeVideoRef.current) return;
+    const video = welcomeVideoRef.current;
+    video.muted = !audioEnabled;
+    try {
+      await video.play();
+      setWelcomeVideoNeedsTap(false);
+    } catch {
+      if (audioEnabled) setWelcomeVideoNeedsTap(true);
+    }
+  };
+  const handleWelcomeTapToPlay = async () => {
+    const video = welcomeVideoRef.current;
+    if (!video) return;
+    video.muted = false;
+    try {
+      await video.play();
+      setWelcomeVideoNeedsTap(false);
+    } catch {
+      setWelcomeVideoNeedsTap(true);
+    }
   };
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -390,11 +433,13 @@ export default function Home() {
         <section className="welcome-video-overlay" aria-live="polite">
           <div className="welcome-video-shell">
             <video
+              ref={welcomeVideoRef}
               className="victor-welcome-video"
               autoPlay
-              muted
+              muted={!audioEnabled}
               playsInline
               preload="auto"
+              onCanPlay={handleWelcomeVideoCanPlay}
               onEnded={transitionToMap}
               onError={handleWelcomeVideoError}
             >
@@ -406,6 +451,9 @@ export default function Home() {
               <p>PLAYBACK AUTHORIZED</p>
             </div>
             {welcomeVideoFailed && <p className="welcome-video-fallback">MESSAGE FEED ERROR :: FAILING OVER TO ROUTING MAP IN 00:05</p>}
+            {welcomeVideoNeedsTap && (
+              <button className="tap-play-message" type="button" onClick={handleWelcomeTapToPlay}>TAP TO PLAY MESSAGE</button>
+            )}
           </div>
           <button className="skip-message" type="button" onClick={transitionToMap}>SKIP MESSAGE</button>
         </section>
