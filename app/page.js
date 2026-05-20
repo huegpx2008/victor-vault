@@ -59,6 +59,7 @@ export default function Home() {
   const [routingLogs, setRoutingLogs] = useState(baseRoutingLogs);
   const [mapAnalytics, setMapAnalytics] = useState({ pps: 2851, latency: 23.7, integrity: 99.97, active: 10 });
   const [mapVideoFailed, setMapVideoFailed] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const [bootIndex, setBootIndex] = useState(0);
   const [handshake, setHandshake] = useState(0);
   const [bootComplete, setBootComplete] = useState(false);
@@ -174,6 +175,14 @@ export default function Home() {
     setHumLevel(0.009, 0.7);
     playTerminalClick(170, 1, 0.0068);
   };
+
+
+  useEffect(() => {
+    const updateViewport = () => setIsDesktop(window.innerWidth >= 768);
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
+  }, []);
 
   useEffect(() => {
     if (!showIntro) return;
@@ -323,6 +332,8 @@ export default function Home() {
   }, []);
 
   const bootFeed = useMemo(() => bootLines.slice(0, bootIndex + 1), [bootIndex]);
+  const videoSrc = isDesktop ? '/data/landscape.mp4' : '/data/gemini_generated_video_86717de7.mp4';
+  const videoSourceLabel = isDesktop ? 'LANDSCAPE' : 'PORTRAIT';
   const handleSubmit = (e) => {
     e.preventDefault();
     setStatus('idle');
@@ -366,7 +377,8 @@ export default function Home() {
               {!mapVideoFailed && (
                 <>
                   <video
-                    className="map-bg-video map-bg-video-portrait"
+                    key={videoSrc}
+                    className="map-bg-video"
                     autoPlay
                     muted
                     loop
@@ -374,19 +386,9 @@ export default function Home() {
                     preload="auto"
                     onError={handleMapVideoError}
                   >
-                    <source src="/data/gemini_generated_video_86717de7.mp4" type="video/mp4" />
+                    <source src={videoSrc} type="video/mp4" />
                   </video>
-                  <video
-                    className="map-bg-video map-bg-video-landscape"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    onError={handleMapVideoError}
-                  >
-                    <source src="/data/landscape.mp4" type="video/mp4" />
-                  </video>
+                  <div className="video-source-debug">VIDEO SOURCE: {videoSourceLabel}</div>
                 </>
               )}
             </div>
