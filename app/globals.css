@@ -306,6 +306,17 @@ button:hover { filter: brightness(1.15); }
   background: rgba(2, 20, 35, 0.9);
 }
 
+.enable-audio {
+  position: fixed;
+  left: 0.9rem;
+  bottom: 0.9rem;
+  z-index: 70;
+  width: auto;
+  padding: 0.62rem 0.82rem;
+  background: rgba(2, 20, 35, 0.9);
+  border-color: rgba(124, 251, 232, 0.44);
+}
+
 .gated-module[data-visible='false'] {
   opacity: 0;
   transform: translateY(8px);
