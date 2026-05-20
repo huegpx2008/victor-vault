@@ -48,6 +48,7 @@ const hexChunk = (len) => Array.from({ length: len }, () => Math.floor(Math.rand
 const makeLogLine = (idx) => `[${introPrefixes[idx % introPrefixes.length]}] HASH ${hexChunk(8)}-${hexChunk(8)} :: NODE-CHECK ${hexChunk(4)} :: INDEX ${Math.min(99, 18 + ((idx * 7) % 82))}%${idx % 4 === 0 ? ` :: ${introWarnings[idx % introWarnings.length]}` : ''}`;
 
 export default function Home() {
+  const [hasEnteredArchive, setHasEnteredArchive] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
   const [showGlobalMap, setShowGlobalMap] = useState(false);
@@ -160,10 +161,10 @@ export default function Home() {
     setMapVideoFailed(true);
   };
 
-  const handleEnableAudio = async () => {
-    if (audioEnabled) return;
+  const unlockAudio = async () => {
+    if (audioEnabled) return true;
     const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextCtor) return;
+    if (!AudioContextCtor) return false;
     const ctx = new AudioContextCtor();
     if (ctx.state === 'suspended') await ctx.resume();
     const humOsc = ctx.createOscillator();
@@ -179,10 +180,19 @@ export default function Home() {
     setAudioEnabled(true);
     setHumLevel(0.009, 0.7);
     playTerminalClick(170, 1, 0.0068);
+    return true;
+  };
+
+  const handleEnterArchive = async () => {
+    await unlockAudio();
+    setHasEnteredArchive(true);
+    if (typeof window !== 'undefined') window.sessionStorage.setItem('victor_archive_started', '1');
   };
 
 
   useEffect(() => {
+    const alreadyStarted = window.sessionStorage.getItem('victor_archive_started') === '1';
+    if (alreadyStarted) setHasEnteredArchive(true);
     const updateViewport = () => setIsDesktop(window.innerWidth >= 768);
     updateViewport();
     window.addEventListener('resize', updateViewport);
@@ -190,7 +200,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!showIntro) return;
+    if (!showIntro || !hasEnteredArchive) return;
     const start = Date.now();
     const timer = setInterval(() => {
       const elapsed = Date.now() - start;
@@ -202,7 +212,7 @@ export default function Home() {
       }
     }, 90);
     return () => clearInterval(timer);
-  }, [showIntro]);
+  }, [showIntro, hasEnteredArchive]);
 
   useEffect(() => () => {
     if (welcomeFallbackTimerRef.current) clearTimeout(welcomeFallbackTimerRef.current);
@@ -422,11 +432,21 @@ export default function Home() {
       <div className="scanlines" /><div className="flicker" />
 
       <div className={`intro-overlay ${showIntro ? 'active' : 'hidden'}`} aria-hidden={!showIntro}> 
-        <div className="intro-shell"><header className="intro-header"><h1 className="glitch" data-text="VICTOR ARCHIVE">VICTOR ARCHIVE</h1><h2>VICTOR VAULT // PRE-ACCESS BOOTSTRAP</h2><span>SAFE MODE + OFFSHORE RELAY + NFC BRIDGE</span></header>
+        {!hasEnteredArchive ? (
+          <div className="archive-entry-gate">
+            <button className="archive-entry-button" type="button" onClick={handleEnterArchive}>ENTER ARCHIVE</button>
+            <p className="archive-entry-note">SECURE TERMINAL ACCESS REQUIRED</p>
+          </div>
+        ) : (
+          <div className="intro-shell"><header className="intro-header"><h1 className="glitch" data-text="VICTOR ARCHIVE">VICTOR ARCHIVE</h1><h2>VICTOR VAULT // PRE-ACCESS BOOTSTRAP</h2><span>SAFE MODE + OFFSHORE RELAY + NFC BRIDGE</span></header>
           <div className="intro-terminal"><div className="intro-feed">{introLogs.map((line, idx) => <p key={`${line}-${idx}`}>{line}</p>)}</div><div className="typed-line">&gt; {typedLine}</div><div className="warning-line">! {warningLine}</div><div className="intro-progress-wrap"><div className="intro-progress-bar" style={{ width: `${introProgress}%` }} /></div><p className="intro-progress-label">ARCHIVE INDEXING {introProgress}%</p></div>
-        </div>
-        <button className="skip-boot" type="button" onClick={() => { setShowIntro(false); setShowWelcomeVideo(true); }}>SKIP BOOT</button>
-        <button className="enable-audio" type="button" onClick={handleEnableAudio}>{audioEnabled ? 'AUDIO ONLINE' : 'ENABLE AUDIO'}</button>
+          </div>
+        )}
+        {hasEnteredArchive && (
+          <>
+            <button className="skip-boot" type="button" onClick={() => { setShowIntro(false); setShowWelcomeVideo(true); }}>SKIP BOOT</button>
+          </>
+        )}
       </div>
 
       {showWelcomeVideo && (

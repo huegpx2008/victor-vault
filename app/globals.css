@@ -263,6 +263,38 @@ button:hover { filter: brightness(1.15); }
   flex-direction: column;
   gap: 0.7rem;
 }
+.archive-entry-gate {
+  min-height: 100vh;
+  width: min(700px, 92vw);
+  display: grid;
+  place-items: center;
+  gap: 0.8rem;
+  align-content: center;
+  text-align: center;
+}
+
+.archive-entry-button {
+  width: auto;
+  min-width: min(86vw, 360px);
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 251, 232, 0.65);
+  background: linear-gradient(160deg, rgba(0, 14, 30, 0.96), rgba(2, 26, 44, 0.9));
+  color: #b6fff1;
+  letter-spacing: 0.22rem;
+  text-transform: uppercase;
+  font-size: clamp(0.9rem, 2.2vw, 1.08rem);
+  box-shadow: 0 0 22px rgba(82, 176, 255, 0.34), 0 0 42px rgba(124, 251, 232, 0.2), inset 0 0 18px rgba(124, 251, 232, 0.12);
+  animation: archiveEntryPulse 2.4s ease-in-out infinite;
+}
+
+.archive-entry-note {
+  margin: 0;
+  color: #8ebfee;
+  letter-spacing: 0.16rem;
+  font-size: clamp(0.64rem, 1.8vw, 0.78rem);
+  opacity: 0.95;
+}
 
 .intro-header {
   flex: 0 0 auto;
@@ -361,17 +393,6 @@ button:hover { filter: brightness(1.15); }
   width: auto;
   padding: 0.62rem 0.82rem;
   background: rgba(2, 20, 35, 0.9);
-}
-
-.enable-audio {
-  position: fixed;
-  left: 0.9rem;
-  bottom: 0.9rem;
-  z-index: 70;
-  width: auto;
-  padding: 0.62rem 0.82rem;
-  background: rgba(2, 20, 35, 0.9);
-  border-color: rgba(124, 251, 232, 0.44);
 }
 
 .welcome-video-overlay {
@@ -481,6 +502,16 @@ button:hover { filter: brightness(1.15); }
 @keyframes pulseWarn {
   0%, 100% { opacity: 0.65; }
   50% { opacity: 1; }
+}
+@keyframes archiveEntryPulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(82, 176, 255, 0.26), 0 0 30px rgba(124, 251, 232, 0.18), inset 0 0 10px rgba(124, 251, 232, 0.1);
+    filter: brightness(0.98);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(82, 176, 255, 0.45), 0 0 56px rgba(124, 251, 232, 0.34), inset 0 0 18px rgba(124, 251, 232, 0.22);
+    filter: brightness(1.08);
+  }
 }
 
 .destruct-overlay {
