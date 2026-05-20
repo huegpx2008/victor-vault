@@ -26,6 +26,12 @@ const mapStatuses = [
   'LEDGER HASH CONFIRMED...',
   'NODE CHAIN SYNCHRONIZED...'
 ];
+const networkStats = [
+  ['ENCRYPTION', 'AES-256'],
+  ['FIREWALL', 'ACTIVE'],
+  ['UPLINKS', '7'],
+  ['SATELLITES', '12']
+];
 const mapNodes = [
   { label: 'USA ORIGIN NODE', left: 24, top: 34, origin: true },
   { label: 'CAYMAN RELAY', left: 31, top: 46 },
@@ -55,6 +61,7 @@ export default function Home() {
   const [warningLine, setWarningLine] = useState(introWarnings[0]);
   const [mapStatus, setMapStatus] = useState(mapStatuses[0]);
   const [mapPanelLogs, setMapPanelLogs] = useState(() => Array.from({ length: 8 }, (_, i) => `RID-${hexChunk(4)} CLUSTER-${i + 11} ONLINE`));
+  const [mapAnalytics, setMapAnalytics] = useState({ pps: 2851, latency: 23.7, integrity: 99.97, active: 10 });
   const [bootIndex, setBootIndex] = useState(0);
   const [handshake, setHandshake] = useState(0);
   const [bootComplete, setBootComplete] = useState(false);
@@ -147,6 +154,7 @@ export default function Home() {
     const statusTimer = setInterval(() => {
       setMapStatus(mapStatuses[Math.floor(Math.random() * mapStatuses.length)]);
       setMapPanelLogs((prev) => [...prev.slice(-10), `RID-${hexChunk(4)} NODE-${hexChunk(2)} ROUTE ${Math.floor(Math.random() * 100)}%`]);
+      setMapAnalytics((prev) => ({ pps: 2500 + Math.floor(Math.random() * 900), latency: Number((20 + Math.random() * 8).toFixed(1)), integrity: Number((99.9 + Math.random() * 0.09).toFixed(2)), active: 10 }));
       playTone(880 + Math.random() * 180, 0.05, 0.01, 'triangle');
     }, 550);
     return () => { clearInterval(progressTimer); clearInterval(statusTimer); };
@@ -297,8 +305,11 @@ export default function Home() {
 
       {showGlobalMap && (
         <section className="map-overlay" aria-live="polite">
-          <h1>GLOBAL OFFSHORE NODE ROUTING</h1>
-          <p>Tracing Victor Archive financial relay network</p>
+          <header className="map-hero">
+            <h1>VICTOR ARCHIVE</h1>
+            <h2>GLOBAL OFFSHORE NODE ROUTING</h2>
+            <p>Tracing Victor Archive financial relay network</p>
+          </header>
           <div className="map-grid">
             <div className="map-globe">
               <svg className="world-svg" viewBox="0 0 1000 540" preserveAspectRatio="none" aria-hidden="true">
@@ -335,11 +346,18 @@ export default function Home() {
             <div className="map-terminal">
               <p className="map-status">{mapStatus}</p>
               <div className="map-side-panels">
-                <div><h3>ACCOUNT CLUSTERS</h3>{mapPanelLogs.slice(-5).map((line, idx) => <p key={`a-${idx}`}>{line}</p>)}</div>
-                <div><h3>NODE STATUS</h3>{mapPanelLogs.slice(-5).map((line, idx) => <p key={`b-${idx}`}>SYNC {idx + 1} :: {line}</p>)}</div>
+                <div><h3>ROUTING ANALYTICS</h3><p>PACKETS/SEC: {mapAnalytics.pps}</p><p>LATENCY: {mapAnalytics.latency}ms</p><p>INTEGRITY: {mapAnalytics.integrity}%</p><p>ACTIVE ROUTES: {mapAnalytics.active}/10</p></div>
+                <div><h3>NETWORK STATUS</h3>{networkStats.map(([k, v]) => <p key={k}>{k}: {v}</p>)}</div>
+              </div>
+              <div className="map-lower-panels">
+                <div><h3>ROUTING LOG</h3>{mapPanelLogs.slice(-8).map((line, idx) => <p key={`r-${idx}`}>00:00:{idx + 2} {line}</p>)}</div>
+                <div><h3>ACCOUNT CLUSTERS</h3>{[1,2,3,4,5,6].map((n) => <p key={n}>CLUSTER {String(n).padStart(3, '0')} ${Math.floor(10 + Math.random() * 90).toLocaleString()}, {Math.floor(Math.random()*900000)}.00</p>)}</div>
+                <div><h3>NODE STATUS</h3>{mapNodes.map((n) => <p key={n.label}>{n.label} <strong>ONLINE</strong></p>)}</div>
+                <div><h3>ROUTE ENCRYPTION KEY</h3><p>73AF-9C2B-1D4E-8F77-6B2A-9E11</p></div>
               </div>
               <div className="intro-progress-wrap"><div className="intro-progress-bar map-progress" style={{ width: `${mapProgress}%` }} /></div>
               <p className="intro-progress-label">OFFSHORE ROUTE SYNC {mapProgress}%</p>
+              {mapProgress >= 100 && <p className="map-complete">ROUTE SYNCHRONIZATION COMPLETE<br />REDIRECTING TO VICTOR ARCHIVE SECURE INTERFACE...</p>}
             </div>
           </div>
         </section>
