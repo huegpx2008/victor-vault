@@ -223,13 +223,19 @@ button:hover { filter: brightness(1.15); }
 }
 
 
-@media (min-width: 768px) {
-  .map-bg-video-portrait { display: none; }
-  .map-bg-video-landscape {
-    display: block;
-    object-fit: contain;
-    background: #010507;
-  }
+
+
+.video-source-debug {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  z-index: 5;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid rgba(124, 251, 232, 0.45);
+  background: rgba(0, 5, 12, 0.72);
+  color: #9cf8ea;
+  font-size: 0.62rem;
+  letter-spacing: 0.08rem;
 }
 
 @media (max-width: 820px) {
