@@ -27,13 +27,16 @@ const mapStatuses = [
   'NODE CHAIN SYNCHRONIZED...'
 ];
 const mapNodes = [
-  { label: 'USA ORIGIN NODE', left: '24%', top: '34%' },
-  { label: 'CAYMAN RELAY', left: '31%', top: '46%' },
-  { label: 'SWISS VAULT', left: '51%', top: '31%' },
-  { label: 'PANAMA MIRROR', left: '28%', top: '51%' },
-  { label: 'SINGAPORE LEDGER', left: '78%', top: '56%' },
-  { label: 'MONACO ESCROW', left: '53%', top: '37%' },
-  { label: 'BVI SHADOW NODE', left: '34%', top: '44%' }
+  { label: 'USA ORIGIN NODE', left: 24, top: 34, origin: true },
+  { label: 'CAYMAN RELAY', left: 31, top: 46 },
+  { label: 'SWISS VAULT', left: 51, top: 31 },
+  { label: 'PANAMA MIRROR', left: 28, top: 51 },
+  { label: 'SINGAPORE LEDGER', left: 78, top: 56 },
+  { label: 'MONACO ESCROW', left: 53, top: 37 },
+  { label: 'BVI SHADOW NODE', left: 34, top: 44 },
+  { label: 'DUBAI HOLDING NODE', left: 62, top: 41 },
+  { label: 'LUXEMBOURG TRUST', left: 49, top: 34 },
+  { label: 'HONG KONG MIRROR', left: 74, top: 47 }
 ];
 const introPrefixes = ['SYS', 'NODE', 'ARC', 'BIO', 'NFC', 'VX'];
 const destructStages = ['PURGING VICTOR ARCHIVE INDEX...', 'DELETING OFFSHORE NODE MAP...', 'WIPING CRIMINAL LEDGER CACHE...', 'SCRAMBLING BIOMETRIC KEY...', 'DESTROYING INHERITANCE ACCESS TOKEN...', 'SEALING DEAD MAN SWITCH...'];
@@ -51,6 +54,7 @@ export default function Home() {
   const [typedLine, setTypedLine] = useState('');
   const [warningLine, setWarningLine] = useState(introWarnings[0]);
   const [mapStatus, setMapStatus] = useState(mapStatuses[0]);
+  const [mapPanelLogs, setMapPanelLogs] = useState(() => Array.from({ length: 8 }, (_, i) => `RID-${hexChunk(4)} CLUSTER-${i + 11} ONLINE`));
   const [bootIndex, setBootIndex] = useState(0);
   const [handshake, setHandshake] = useState(0);
   const [bootComplete, setBootComplete] = useState(false);
@@ -142,6 +146,7 @@ export default function Home() {
     }, 90);
     const statusTimer = setInterval(() => {
       setMapStatus(mapStatuses[Math.floor(Math.random() * mapStatuses.length)]);
+      setMapPanelLogs((prev) => [...prev.slice(-10), `RID-${hexChunk(4)} NODE-${hexChunk(2)} ROUTE ${Math.floor(Math.random() * 100)}%`]);
       playTone(880 + Math.random() * 180, 0.05, 0.01, 'triangle');
     }, 550);
     return () => { clearInterval(progressTimer); clearInterval(statusTimer); };
@@ -296,12 +301,43 @@ export default function Home() {
           <p>Tracing Victor Archive financial relay network</p>
           <div className="map-grid">
             <div className="map-globe">
+              <svg className="world-svg" viewBox="0 0 1000 540" preserveAspectRatio="none" aria-hidden="true">
+                <g className="lat-lines">
+                  {[60, 120, 180, 240, 300, 360, 420, 480].map((y) => <line key={`lat-${y}`} x1="0" y1={y} x2="1000" y2={y} />)}
+                  {[100, 200, 300, 400, 500, 600, 700, 800, 900].map((x) => <line key={`lon-${x}`} x1={x} y1="0" x2={x} y2="540" />)}
+                </g>
+                <g className="continent-lines">
+                  <path d="M94 198 L140 150 L208 146 L250 182 L235 230 L187 256 L144 240 L108 230 Z" />
+                  <path d="M254 258 L286 286 L314 336 L301 412 L272 468 L238 450 L220 390 L228 318 Z" />
+                  <path d="M444 144 L520 120 L598 130 L662 168 L628 226 L554 244 L486 208 Z" />
+                  <path d="M546 262 L606 286 L646 352 L622 452 L566 500 L512 472 L488 406 L508 330 Z" />
+                  <path d="M680 194 L736 174 L794 184 L842 220 L824 274 L780 304 L718 290 L678 246 Z" />
+                  <path d="M836 370 L872 398 L866 446 L830 468 L798 444 L806 398 Z" />
+                </g>
+              </svg>
               <div className="map-ring" />
-              {mapNodes.map((node, index) => <div key={node.label} className={`map-node ${index === 0 ? 'origin' : ''}`} style={{ left: node.left, top: node.top }}><span>{node.label}</span></div>)}
-              <div className="route r1" /><div className="route r2" /><div className="route r3" /><div className="route r4" /><div className="route r5" /><div className="route r6" />
+              <div className="scan-sweep" />
+              {mapNodes.filter((n) => !n.origin).map((node, index) => {
+                const dx = node.left - mapNodes[0].left;
+                const dy = node.top - mapNodes[0].top;
+                const distance = Math.sqrt((dx ** 2) + (dy ** 2));
+                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+                return (
+                  <div key={`${node.label}-route`} className="route-wrap" style={{ left: `${mapNodes[0].left}%`, top: `${mapNodes[0].top}%`, width: `${distance}%`, transform: `rotate(${angle}deg)`, animationDelay: `${index * 0.35}s` }}>
+                    <span className="route-line" />
+                    <span className="packet" />
+                  </div>
+                );
+              })}
+              {mapNodes.map((node, index) => <div key={node.label} className={`map-node ${node.origin ? 'origin' : ''}`} style={{ left: `${node.left}%`, top: `${node.top}%` }}><span className="server-box" /><em>{node.label}</em></div>)}
+              <div className="data-particles" />
             </div>
             <div className="map-terminal">
               <p className="map-status">{mapStatus}</p>
+              <div className="map-side-panels">
+                <div><h3>ACCOUNT CLUSTERS</h3>{mapPanelLogs.slice(-5).map((line, idx) => <p key={`a-${idx}`}>{line}</p>)}</div>
+                <div><h3>NODE STATUS</h3>{mapPanelLogs.slice(-5).map((line, idx) => <p key={`b-${idx}`}>SYNC {idx + 1} :: {line}</p>)}</div>
+              </div>
               <div className="intro-progress-wrap"><div className="intro-progress-bar map-progress" style={{ width: `${mapProgress}%` }} /></div>
               <p className="intro-progress-label">OFFSHORE ROUTE SYNC {mapProgress}%</p>
             </div>
