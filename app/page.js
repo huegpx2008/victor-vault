@@ -115,21 +115,30 @@ export default function Home() {
   };
 
   const playRouteConfirm = () => {
-    playTone(156, 0.08, 0.006, 'triangle');
-    setTimeout(() => playTone(92, 0.12, 0.0065, 'sine'), 22);
-    setTimeout(() => playTerminalClick(146, 2, 0.0055), 35);
+    playTone(142, 0.1, 0.012, 'triangle');
+    setTimeout(() => playTone(84, 0.15, 0.0125, 'sine'), 22);
+    setTimeout(() => playTerminalClick(138, 3, 0.0105), 35);
   };
 
   const playAccessGranted = () => {
-    playTerminalClick(190, 1, 0.007);
-    setTimeout(() => playTone(212, 0.06, 0.006, 'square'), 36);
-    setTimeout(() => playTone(262, 0.08, 0.0058, 'triangle'), 90);
+    playTerminalClick(184, 2, 0.0115);
+    setTimeout(() => playTone(206, 0.08, 0.0115, 'square'), 36);
+    setTimeout(() => playTone(248, 0.1, 0.0105, 'triangle'), 90);
+    setTimeout(() => playTone(92, 0.14, 0.011, 'sine'), 44);
   };
 
   const playAccessDenied = () => {
-    playTone(118, 0.11, 0.007, 'sawtooth');
-    setTimeout(() => playTone(86, 0.12, 0.0075, 'square'), 60);
-    setTimeout(() => playTone(64, 0.13, 0.008, 'sine'), 125);
+    playTone(108, 0.14, 0.012, 'sawtooth');
+    setTimeout(() => playTone(78, 0.14, 0.0128, 'square'), 60);
+    setTimeout(() => playTone(58, 0.16, 0.013, 'sine'), 125);
+  };
+
+
+  const playBreachPulse = (intensity = 1) => {
+    const impact = Math.min(1.4, Math.max(0.8, intensity));
+    playTone(96, 0.1, 0.0105 * impact, 'sawtooth');
+    setTimeout(() => playTone(68, 0.14, 0.0115 * impact, 'square'), 40);
+    setTimeout(() => playTone(54, 0.16, 0.012 * impact, 'sine'), 84);
   };
 
   const setHumLevel = (targetLevel = 0.008, ramp = 0.35) => {
@@ -162,7 +171,7 @@ export default function Home() {
     audioCtxRef.current = ctx;
     humRef.current = { osc: humOsc, gain: humGain };
     setAudioEnabled(true);
-    setHumLevel(0.006, 0.7);
+    setHumLevel(0.009, 0.7);
     playTerminalClick(170, 1, 0.0068);
   };
 
@@ -202,9 +211,9 @@ export default function Home() {
 
   useEffect(() => {
     if (!audioEnabled) return;
-    if (showIntro) return setHumLevel(0.006, 0.45);
-    if (showGlobalMap) return setHumLevel(0.007, 0.35);
-    setHumLevel(0.01, 0.55);
+    if (showIntro) return setHumLevel(0.0085, 0.45);
+    if (showGlobalMap) return setHumLevel(0.0115, 0.35);
+    setHumLevel(0.0135, 0.55);
   }, [showIntro, showGlobalMap, audioEnabled]);
 
   useEffect(() => {
@@ -220,7 +229,7 @@ export default function Home() {
     if (!showIntro) return;
     const logTimer = setInterval(() => {
       setIntroLogs((prev) => [...prev.slice(-23), makeLogLine(prev.length + Math.floor(Math.random() * 3))]);
-      playTerminalClick(150 + Math.random() * 26, 0, 0.0058);
+      playTerminalClick(150 + Math.random() * 26, 1, 0.0086);
     }, 95);
     return () => clearInterval(logTimer);
   }, [showIntro, audioEnabled]);
@@ -229,7 +238,7 @@ export default function Home() {
     if (!showIntro) return;
     const typeTimer = setInterval(() => {
       setTypedLine(`ARCHIVE PIPELINE ${hexChunk(4)}:${hexChunk(4)} READY`);
-      playTerminalClick(170 + Math.random() * 20, 1, 0.0062);
+      playTerminalClick(168 + Math.random() * 18, 2, 0.009);
     }, 550);
     return () => clearInterval(typeTimer);
   }, [showIntro, audioEnabled]);
@@ -243,7 +252,7 @@ export default function Home() {
   useEffect(() => {
     if (showIntro || showGlobalMap || bootComplete) return;
     if (bootIndex >= bootLines.length - 1) return setBootComplete(true);
-    const timer = setTimeout(() => { setBootIndex((prev) => prev + 1); playTerminalClick(178, 2, 0.0066); }, 850);
+    const timer = setTimeout(() => { setBootIndex((prev) => prev + 1); playTerminalClick(174, 3, 0.0096); }, 850);
     return () => clearTimeout(timer);
   }, [bootIndex, showIntro, showGlobalMap, bootComplete, audioEnabled]);
 
@@ -252,7 +261,7 @@ export default function Home() {
     const timer = setInterval(() => setHandshake((prev) => {
       if (prev >= 100) return 100;
       const next = prev + 2;
-      if (next % 10 === 0) playTerminalClick(122 + next * 0.7, 2, 0.0056);
+      if (next % 10 === 0) playTerminalClick(114 + next * 0.65, 3, 0.0098);
       if (next >= 100) setHandshakeComplete(true);
       return Math.min(100, next);
     }), 80);
@@ -284,7 +293,11 @@ export default function Home() {
 
   useEffect(() => {
     if (!selfDestructActive || destructComplete) return;
-    const ct = setInterval(() => setCountdown((prev) => Math.max(0, prev - 1)), 1000);
+    const ct = setInterval(() => setCountdown((prev) => {
+      const next = Math.max(0, prev - 1);
+      playBreachPulse(next <= 3 ? 1.35 : 1.05);
+      return next;
+    }), 1000);
     const lt = setInterval(() => setDestructLogs((prev) => [...prev.slice(-65), makeLogLine(prev.length + 90)]), 80);
     const bt = setInterval(() => setDestructBarsState((prev) => ({
       'DATA PURGE': Math.min(100, prev['DATA PURGE'] + 6),
@@ -298,7 +311,7 @@ export default function Home() {
   useEffect(() => {
     if (selfDestructActive && countdown === 0 && !destructComplete) {
       setDestructComplete(true);
-      playTone(72, 0.22, 0.009, 'sawtooth');
+      playTone(62, 0.3, 0.014, 'sawtooth');
     }
   }, [selfDestructActive, countdown, destructComplete]);
 
