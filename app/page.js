@@ -11,13 +11,98 @@ const bootLines = [
   'Stand by for credential input...'
 ];
 
+const introWarnings = [
+  'VERIFYING NFC TOKEN',
+  'DECRYPTING VICTOR ARCHIVE INDEX',
+  'BIOMETRIC GATEWAY INITIALIZED',
+  'OFFSHORE NODE ROUTE CONFIRMED',
+  'CRIMINAL LEDGER MAP SEALED',
+  'FACIAL SCAN MODULE STANDBY'
+];
+
+const introPrefixes = [
+  'SYS',
+  'NODE',
+  'ARC',
+  'BIO',
+  'NFC',
+  'VX'
+];
+
+const hexChunk = (len) => Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
+
+const makeLogLine = (idx) => {
+  const prefix = introPrefixes[idx % introPrefixes.length];
+  const percent = `${Math.min(99, 18 + ((idx * 7) % 82))}%`;
+  const warning = idx % 4 === 0 ? ` :: ${introWarnings[idx % introWarnings.length]}` : '';
+
+  return `[${prefix}] HASH ${hexChunk(8)}-${hexChunk(8)} :: NODE-CHECK ${hexChunk(4)} :: INDEX ${percent}${warning}`;
+};
+
 export default function Home() {
+  const [showIntro, setShowIntro] = useState(true);
+  const [introProgress, setIntroProgress] = useState(0);
+  const [introLogs, setIntroLogs] = useState(() => Array.from({ length: 8 }, (_, i) => makeLogLine(i)));
+  const [typedLine, setTypedLine] = useState('');
+  const [warningLine, setWarningLine] = useState(introWarnings[0]);
+
   const [bootIndex, setBootIndex] = useState(0);
   const [handshake, setHandshake] = useState(0);
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState('idle');
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+
+  useEffect(() => {
+    if (!showIntro) return;
+
+    const introLengthMs = 9800;
+    const start = Date.now();
+
+    const progressTimer = setInterval(() => {
+      const elapsed = Date.now() - start;
+      setIntroProgress(Math.min(100, Math.round((elapsed / introLengthMs) * 100)));
+      if (elapsed >= introLengthMs) {
+        setShowIntro(false);
+      }
+    }, 90);
+
+    return () => clearInterval(progressTimer);
+  }, [showIntro]);
+
+  useEffect(() => {
+    if (!showIntro) return;
+
+    const logTimer = setInterval(() => {
+      setIntroLogs((prev) => {
+        const nextIndex = prev.length + Math.floor(Math.random() * 3);
+        return [...prev.slice(-23), makeLogLine(nextIndex)];
+      });
+    }, 95);
+
+    return () => clearInterval(logTimer);
+  }, [showIntro]);
+
+  useEffect(() => {
+    if (!showIntro) return;
+
+    const typeTimer = setInterval(() => {
+      const target = `ARCHIVE PIPELINE ${hexChunk(4)}:${hexChunk(4)} READY`;
+      setTypedLine(target);
+    }, 550);
+
+    return () => clearInterval(typeTimer);
+  }, [showIntro]);
+
+  useEffect(() => {
+    if (!showIntro) return;
+
+    const warningTimer = setInterval(() => {
+      setWarningLine(introWarnings[Math.floor(Math.random() * introWarnings.length)]);
+    }, 1100);
+
+    return () => clearInterval(warningTimer);
+  }, [showIntro]);
 
   useEffect(() => {
     if (bootIndex >= bootLines.length - 1) return;
@@ -81,6 +166,34 @@ export default function Home() {
     <main className="vault-root">
       <div className="scanlines" />
       <div className="flicker" />
+
+      <div className={`intro-overlay ${showIntro ? 'active' : 'hidden'}`} aria-hidden={!showIntro}>
+        <div className="intro-terminal">
+          <header>
+            <h2>VICTOR VAULT // PRE-ACCESS BOOTSTRAP</h2>
+            <span>SAFE MODE + OFFSHORE RELAY + NFC BRIDGE</span>
+          </header>
+
+          <div className="intro-feed">
+            {introLogs.map((line, idx) => (
+              <p key={`${line}-${idx}`}>{line}</p>
+            ))}
+          </div>
+
+          <div className="typed-line">&gt; {typedLine}</div>
+          <div className="warning-line">! {warningLine}</div>
+
+          <div className="intro-progress-wrap">
+            <div className="intro-progress-bar" style={{ width: `${introProgress}%` }} />
+          </div>
+          <p className="intro-progress-label">ARCHIVE INDEXING {introProgress}%</p>
+        </div>
+
+        <button className="skip-boot" type="button" onClick={() => setShowIntro(false)}>
+          SKIP BOOT
+        </button>
+      </div>
+
       <section className="vault-panel">
         <header className="hero glitch" data-text="VICTOR ARCHIVE">
           <h1>VICTOR ARCHIVE</h1>

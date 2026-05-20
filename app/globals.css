@@ -186,3 +186,111 @@ button:hover { filter: brightness(1.15); }
   .vault-panel { padding: 0.95rem; }
   .hero p { font-size: 0.82rem; }
 }
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: radial-gradient(circle at 50% 0%, rgba(22, 40, 70, 0.22), rgba(0, 0, 0, 0.98) 52%);
+  padding: 1rem;
+  display: grid;
+  place-items: center;
+  transition: opacity 650ms ease, visibility 650ms ease;
+}
+
+.intro-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-terminal {
+  width: min(1000px, 100%);
+  min-height: min(78vh, 680px);
+  border: 1px solid rgba(124, 251, 232, 0.35);
+  background: rgba(0, 5, 10, 0.9);
+  box-shadow: 0 0 60px rgba(69, 168, 255, 0.2), inset 0 0 20px rgba(124, 251, 232, 0.15);
+  border-radius: 12px;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.intro-terminal header h2 {
+  margin: 0;
+  font-size: clamp(0.84rem, 2vw, 1rem);
+  letter-spacing: 0.14rem;
+}
+
+.intro-terminal header span {
+  font-size: 0.74rem;
+  color: #90c6ff;
+}
+
+.intro-feed {
+  flex: 1;
+  overflow: hidden;
+  border: 1px solid rgba(75, 228, 255, 0.2);
+  background: rgba(1, 12, 22, 0.9);
+  padding: 0.6rem;
+}
+
+.intro-feed p {
+  margin: 0;
+  font-size: clamp(0.64rem, 1.8vw, 0.78rem);
+  line-height: 1.27;
+  color: #8fffe7;
+  opacity: 0.92;
+  animation: flashIn 220ms linear;
+}
+
+.typed-line,
+.warning-line {
+  font-size: clamp(0.72rem, 2.1vw, 0.9rem);
+  letter-spacing: 0.08rem;
+}
+
+.warning-line {
+  color: #a9c9ff;
+  animation: pulseWarn 1.1s ease-in-out infinite;
+}
+
+.intro-progress-wrap {
+  height: 14px;
+  border: 1px solid rgba(124, 251, 232, 0.3);
+  background: rgba(0, 0, 0, 0.56);
+}
+
+.intro-progress-bar {
+  height: 100%;
+  transition: width 90ms linear;
+  background: linear-gradient(90deg, #7cfbe8, #45a8ff, #8fb1ff);
+  box-shadow: 0 0 18px rgba(124, 251, 232, 0.6);
+}
+
+.intro-progress-label {
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.11rem;
+}
+
+.skip-boot {
+  position: fixed;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  z-index: 70;
+  width: auto;
+  padding: 0.62rem 0.82rem;
+  background: rgba(2, 20, 35, 0.9);
+}
+
+@keyframes flashIn {
+  from { opacity: 0.2; transform: translateY(3px); }
+  to { opacity: 0.95; transform: translateY(0); }
+}
+
+@keyframes pulseWarn {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
