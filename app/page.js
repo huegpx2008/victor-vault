@@ -48,6 +48,8 @@ export default function Home() {
 
   const [bootIndex, setBootIndex] = useState(0);
   const [handshake, setHandshake] = useState(0);
+  const [bootComplete, setBootComplete] = useState(false);
+  const [handshakeComplete, setHandshakeComplete] = useState(false);
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState('idle');
   const [scanning, setScanning] = useState(false);
@@ -68,6 +70,20 @@ export default function Home() {
     }, 90);
 
     return () => clearInterval(progressTimer);
+  }, [showIntro]);
+
+  useEffect(() => {
+    if (!showIntro) return;
+
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+    };
   }, [showIntro]);
 
   useEffect(() => {
@@ -105,22 +121,42 @@ export default function Home() {
   }, [showIntro]);
 
   useEffect(() => {
-    if (bootIndex >= bootLines.length - 1) return;
+    if (showIntro || bootComplete) return;
+
+    if (bootIndex >= bootLines.length - 1) {
+      setBootComplete(true);
+      return;
+    }
 
     const timer = setTimeout(() => {
       setBootIndex((prev) => prev + 1);
     }, 850);
 
     return () => clearTimeout(timer);
-  }, [bootIndex]);
+  }, [bootIndex, showIntro, bootComplete]);
 
   useEffect(() => {
+    if (showIntro || !bootComplete || handshakeComplete) return;
+
     const timer = setInterval(() => {
-      setHandshake((prev) => (prev >= 100 ? 100 : prev + 2));
+      setHandshake((prev) => {
+        if (prev >= 100) {
+          setHandshakeComplete(true);
+          return 100;
+        }
+
+        const next = prev + 2;
+        if (next >= 100) {
+          setHandshakeComplete(true);
+          return 100;
+        }
+
+        return next;
+      });
     }, 80);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [showIntro, bootComplete, handshakeComplete]);
 
   useEffect(() => {
     if (!scanning) return;
@@ -168,25 +204,29 @@ export default function Home() {
       <div className="flicker" />
 
       <div className={`intro-overlay ${showIntro ? 'active' : 'hidden'}`} aria-hidden={!showIntro}>
-        <div className="intro-terminal">
-          <header>
+        <div className="intro-shell">
+          <header className="intro-header">
+            <h1 className="glitch" data-text="VICTOR ARCHIVE">VICTOR ARCHIVE</h1>
             <h2>VICTOR VAULT // PRE-ACCESS BOOTSTRAP</h2>
             <span>SAFE MODE + OFFSHORE RELAY + NFC BRIDGE</span>
           </header>
 
-          <div className="intro-feed">
-            {introLogs.map((line, idx) => (
-              <p key={`${line}-${idx}`}>{line}</p>
-            ))}
-          </div>
+          <div className="intro-terminal">
 
-          <div className="typed-line">&gt; {typedLine}</div>
-          <div className="warning-line">! {warningLine}</div>
+            <div className="intro-feed">
+              {introLogs.map((line, idx) => (
+                <p key={`${line}-${idx}`}>{line}</p>
+              ))}
+            </div>
 
-          <div className="intro-progress-wrap">
-            <div className="intro-progress-bar" style={{ width: `${introProgress}%` }} />
+            <div className="typed-line">&gt; {typedLine}</div>
+            <div className="warning-line">! {warningLine}</div>
+
+            <div className="intro-progress-wrap">
+              <div className="intro-progress-bar" style={{ width: `${introProgress}%` }} />
+            </div>
+            <p className="intro-progress-label">ARCHIVE INDEXING {introProgress}%</p>
           </div>
-          <p className="intro-progress-label">ARCHIVE INDEXING {introProgress}%</p>
         </div>
 
         <button className="skip-boot" type="button" onClick={() => setShowIntro(false)}>
@@ -218,14 +258,14 @@ export default function Home() {
             <span>{handshake}% COMPLETE</span>
           </div>
 
-          <div className="nfc module">
+          <div className="nfc module gated-module" data-visible={handshakeComplete}>
             <h2>NFC TOKEN DETECTED</h2>
             <p className="tag">AUTH CHIP: V-A7-SAM-KEY</p>
             <p className="tag">SIGNAL INTEGRITY: 99.7%</p>
             <p className="tag">LOCATION LOCK: OFFSHORE NODE 14</p>
           </div>
 
-          <div className="auth module">
+          <div className="auth module gated-module" data-visible={handshakeComplete}>
             <h2>ACCESS PHRASE</h2>
             <form onSubmit={handleSubmit}>
               <input

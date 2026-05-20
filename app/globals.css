@@ -195,7 +195,26 @@ button:hover { filter: brightness(1.15); }
   padding: 1rem;
   display: grid;
   place-items: center;
+  overflow: hidden;
   transition: opacity 650ms ease, visibility 650ms ease;
+}
+
+.intro-shell {
+  width: min(1000px, 100%);
+  height: min(94vh, 760px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.intro-header {
+  flex: 0 0 auto;
+}
+
+.intro-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: clamp(1.2rem, 5.4vw, 2.1rem);
+  letter-spacing: 0.22rem;
 }
 
 .intro-overlay.hidden {
@@ -205,8 +224,9 @@ button:hover { filter: brightness(1.15); }
 }
 
 .intro-terminal {
-  width: min(1000px, 100%);
-  min-height: min(78vh, 680px);
+  width: 100%;
+  min-height: 0;
+  flex: 1;
   border: 1px solid rgba(124, 251, 232, 0.35);
   background: rgba(0, 5, 10, 0.9);
   box-shadow: 0 0 60px rgba(69, 168, 255, 0.2), inset 0 0 20px rgba(124, 251, 232, 0.15);
@@ -230,7 +250,8 @@ button:hover { filter: brightness(1.15); }
 
 .intro-feed {
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
+  overflow-y: auto;
   border: 1px solid rgba(75, 228, 255, 0.2);
   background: rgba(1, 12, 22, 0.9);
   padding: 0.6rem;
@@ -283,6 +304,22 @@ button:hover { filter: brightness(1.15); }
   width: auto;
   padding: 0.62rem 0.82rem;
   background: rgba(2, 20, 35, 0.9);
+}
+
+.gated-module[data-visible='false'] {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  max-height: 0;
+  overflow: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+  margin: 0;
+}
+
+.gated-module[data-visible='true'] {
+  transition: opacity 260ms ease, transform 260ms ease;
 }
 
 @keyframes flashIn {
