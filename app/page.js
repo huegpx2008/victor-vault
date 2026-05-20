@@ -94,6 +94,44 @@ export default function Home() {
     osc.stop(now + duration + 0.02);
   };
 
+
+
+  const playTerminalClick = (base = 180, depth = 0, level = 0.0075) => {
+    const ctx = audioCtxRef.current;
+    if (!ctx || !audioEnabled) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(base + depth * 8, now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(72, base * 0.62), now + 0.018);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(level, now + 0.003);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.04);
+  };
+
+  const playRouteConfirm = () => {
+    playTone(156, 0.08, 0.006, 'triangle');
+    setTimeout(() => playTone(92, 0.12, 0.0065, 'sine'), 22);
+    setTimeout(() => playTerminalClick(146, 2, 0.0055), 35);
+  };
+
+  const playAccessGranted = () => {
+    playTerminalClick(190, 1, 0.007);
+    setTimeout(() => playTone(212, 0.06, 0.006, 'square'), 36);
+    setTimeout(() => playTone(262, 0.08, 0.0058, 'triangle'), 90);
+  };
+
+  const playAccessDenied = () => {
+    playTone(118, 0.11, 0.007, 'sawtooth');
+    setTimeout(() => playTone(86, 0.12, 0.0075, 'square'), 60);
+    setTimeout(() => playTone(64, 0.13, 0.008, 'sine'), 125);
+  };
+
   const setHumLevel = (targetLevel = 0.008, ramp = 0.35) => {
     const ctx = audioCtxRef.current;
     const hum = humRef.current;
@@ -125,7 +163,7 @@ export default function Home() {
     humRef.current = { osc: humOsc, gain: humGain };
     setAudioEnabled(true);
     setHumLevel(0.006, 0.7);
-    playTone(680, 0.08, 0.018, 'triangle');
+    playTerminalClick(170, 1, 0.0068);
   };
 
   useEffect(() => {
@@ -157,7 +195,7 @@ export default function Home() {
       setMapStatus(mapStatuses[Math.floor(Math.random() * mapStatuses.length)]);
       setRoutingLogs((prev) => [...prev.slice(-10), `CONNECTING ${mapNodes[1 + Math.floor(Math.random() * 9)]} :: OK`]);
       setMapAnalytics((prev) => ({ pps: 2500 + Math.floor(Math.random() * 900), latency: Number((20 + Math.random() * 8).toFixed(1)), integrity: Number((99.9 + Math.random() * 0.09).toFixed(2)), active: 10 }));
-      playTone(880 + Math.random() * 180, 0.05, 0.01, 'triangle');
+      playRouteConfirm();
     }, 550);
     return () => { clearInterval(progressTimer); clearInterval(statusTimer); };
   }, [showGlobalMap]);
@@ -182,7 +220,7 @@ export default function Home() {
     if (!showIntro) return;
     const logTimer = setInterval(() => {
       setIntroLogs((prev) => [...prev.slice(-23), makeLogLine(prev.length + Math.floor(Math.random() * 3))]);
-      playTone(560 + Math.random() * 120, 0.045, 0.012, 'square');
+      playTerminalClick(150 + Math.random() * 26, 0, 0.0058);
     }, 95);
     return () => clearInterval(logTimer);
   }, [showIntro, audioEnabled]);
@@ -191,7 +229,7 @@ export default function Home() {
     if (!showIntro) return;
     const typeTimer = setInterval(() => {
       setTypedLine(`ARCHIVE PIPELINE ${hexChunk(4)}:${hexChunk(4)} READY`);
-      playTone(630 + Math.random() * 80, 0.06, 0.014, 'triangle');
+      playTerminalClick(170 + Math.random() * 20, 1, 0.0062);
     }, 550);
     return () => clearInterval(typeTimer);
   }, [showIntro, audioEnabled]);
@@ -205,7 +243,7 @@ export default function Home() {
   useEffect(() => {
     if (showIntro || showGlobalMap || bootComplete) return;
     if (bootIndex >= bootLines.length - 1) return setBootComplete(true);
-    const timer = setTimeout(() => { setBootIndex((prev) => prev + 1); playTone(690, 0.07, 0.016, 'sine'); }, 850);
+    const timer = setTimeout(() => { setBootIndex((prev) => prev + 1); playTerminalClick(178, 2, 0.0066); }, 850);
     return () => clearTimeout(timer);
   }, [bootIndex, showIntro, showGlobalMap, bootComplete, audioEnabled]);
 
@@ -214,7 +252,7 @@ export default function Home() {
     const timer = setInterval(() => setHandshake((prev) => {
       if (prev >= 100) return 100;
       const next = prev + 2;
-      if (next % 10 === 0) playTone(260 + next * 2, 0.05, 0.011, 'square');
+      if (next % 10 === 0) playTerminalClick(122 + next * 0.7, 2, 0.0056);
       if (next >= 100) setHandshakeComplete(true);
       return Math.min(100, next);
     }), 80);
@@ -235,12 +273,10 @@ export default function Home() {
 
   useEffect(() => {
     if (status === 'granted') {
-      playTone(820, 0.09, 0.02, 'triangle');
-      setTimeout(() => playTone(1020, 0.1, 0.018, 'sine'), 110);
+      playAccessGranted();
     }
     if (status === 'denied') {
-      playTone(220, 0.13, 0.02, 'sawtooth');
-      setTimeout(() => playTone(180, 0.14, 0.016, 'square'), 120);
+      playAccessDenied();
       const timer = setTimeout(() => setSelfDestructActive(true), 1000);
       return () => clearTimeout(timer);
     }
@@ -262,7 +298,7 @@ export default function Home() {
   useEffect(() => {
     if (selfDestructActive && countdown === 0 && !destructComplete) {
       setDestructComplete(true);
-      playTone(140, 0.25, 0.03, 'sawtooth');
+      playTone(72, 0.22, 0.009, 'sawtooth');
     }
   }, [selfDestructActive, countdown, destructComplete]);
 
