@@ -78,6 +78,7 @@ export default function Home() {
   const [destructBarsState, setDestructBarsState] = useState({ 'DATA PURGE': 0, 'KEY DESTRUCTION': 0, 'LEDGER WIPE': 0, 'SYSTEM COLLAPSE': 0 });
   const [welcomeVideoFailed, setWelcomeVideoFailed] = useState(false);
   const [welcomeVideoNeedsTap, setWelcomeVideoNeedsTap] = useState(false);
+  const [welcomeVideoExiting, setWelcomeVideoExiting] = useState(false);
 
   const audioCtxRef = useRef(null);
   const humRef = useRef(null);
@@ -380,6 +381,7 @@ export default function Home() {
     setShowWelcomeVideo(false);
     setShowGlobalMap(true);
     setWelcomeVideoNeedsTap(false);
+    setWelcomeVideoExiting(false);
   };
   const handleWelcomeVideoError = () => {
     setWelcomeVideoFailed(true);
@@ -407,6 +409,10 @@ export default function Home() {
     } catch {
       setWelcomeVideoNeedsTap(true);
     }
+  };
+  const handleWelcomeVideoEnded = () => {
+    setWelcomeVideoExiting(true);
+    setTimeout(() => transitionToMap(), 420);
   };
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -450,7 +456,7 @@ export default function Home() {
       </div>
 
       {showWelcomeVideo && (
-        <section className="welcome-video-overlay" aria-live="polite">
+        <section className={`welcome-video-overlay ${welcomeVideoExiting ? 'is-exiting' : ''}`} aria-live="polite">
           <div className="welcome-video-shell">
             <video
               ref={welcomeVideoRef}
@@ -460,10 +466,10 @@ export default function Home() {
               playsInline
               preload="auto"
               onCanPlay={handleWelcomeVideoCanPlay}
-              onEnded={transitionToMap}
+              onEnded={handleWelcomeVideoEnded}
               onError={handleWelcomeVideoError}
             >
-              <source src="/data/gemini_generated_video_543d8e3a.mp4" type="video/mp4" />
+              <source src="/data/victor message new.mp4" type="video/mp4" />
             </video>
             <div className="welcome-video-hud">
               <p>VICTOR ARCHIVE</p>
