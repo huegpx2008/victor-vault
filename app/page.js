@@ -26,6 +26,7 @@ const mapStatuses = [
   'LEDGER HASH CONFIRMED...',
   'NODE CHAIN SYNCHRONIZED...'
 ];
+const remoteConnectionSteps = ['CONTACTING REMOTE HOST...', 'RESOLVING OFFSHORE RELAY...', 'HANDSHAKE REQUEST SENT...', 'RESPONSE RECEIVED FROM NODE 14...', 'VERIFYING ENCRYPTED CHANNEL...', 'ROUTING THROUGH SECURE MIRROR...', 'REMOTE SERVER LINK ESTABLISHED'];
 const networkStats = [
   ['ENCRYPTION', 'AES-256'],
   ['FIREWALL', 'ACTIVE'],
@@ -51,6 +52,7 @@ export default function Home() {
   const [hasEnteredArchive, setHasEnteredArchive] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [showWelcomeVideo, setShowWelcomeVideo] = useState(false);
+  const [showRemoteConnection, setShowRemoteConnection] = useState(false);
   const [showGlobalMap, setShowGlobalMap] = useState(false);
   const [introProgress, setIntroProgress] = useState(0);
   const [mapProgress, setMapProgress] = useState(0);
@@ -79,13 +81,18 @@ export default function Home() {
   const [welcomeVideoFailed, setWelcomeVideoFailed] = useState(false);
   const [welcomeVideoNeedsTap, setWelcomeVideoNeedsTap] = useState(false);
   const [welcomeVideoExiting, setWelcomeVideoExiting] = useState(false);
+  const [remoteStepIndex, setRemoteStepIndex] = useState(0);
+  const [remoteProgress, setRemoteProgress] = useState({ 'DNS TRACE': 4, 'NODE HANDSHAKE': 2, 'ENCRYPTED TUNNEL': 0, 'RELAY SYNC': 0 });
+  const [remoteFeed, setRemoteFeed] = useState(() => Array.from({ length: 10 }, (_, i) => makeLogLine(i + 140)));
+  const [remoteSecured, setRemoteSecured] = useState(false);
 
   const audioCtxRef = useRef(null);
   const humRef = useRef(null);
   const welcomeFallbackTimerRef = useRef(null);
   const welcomeVideoRef = useRef(null);
+  const remoteMilestonesRef = useRef(new Set());
 
-  const playTone = (frequency = 540, duration = 0.06, gainValue = 0.022, type = 'sine') => {
+  const playTone = (frequency = 540, duration = 0.06, gainValue = 0.03, type = 'sine') => {
     const ctx = audioCtxRef.current;
     if (!ctx || !audioEnabled) return;
     const now = ctx.currentTime;
@@ -104,7 +111,7 @@ export default function Home() {
 
 
 
-  const playTerminalClick = (base = 180, depth = 0, level = 0.0075) => {
+  const playTerminalClick = (base = 180, depth = 0, level = 0.012) => {
     const ctx = audioCtxRef.current;
     if (!ctx || !audioEnabled) return;
     const now = ctx.currentTime;
@@ -139,6 +146,25 @@ export default function Home() {
     playTone(108, 0.14, 0.012, 'sawtooth');
     setTimeout(() => playTone(78, 0.14, 0.0128, 'square'), 60);
     setTimeout(() => playTone(58, 0.16, 0.013, 'sine'), 125);
+  };
+  const playRemotePulse = (idx = 0) => {
+    playTerminalClick(134 + idx * 7, 4, 0.0135);
+    setTimeout(() => playTone(92 + idx * 8, 0.13, 0.015, 'triangle'), 24);
+  };
+  const playRemoteEstablished = () => {
+    playTone(72, 0.2, 0.016, 'sawtooth');
+    setTimeout(() => playTone(116, 0.14, 0.014, 'square'), 70);
+    setTimeout(() => playTone(162, 0.16, 0.013, 'triangle'), 130);
+    setTimeout(() => playTerminalClick(122, 5, 0.0165), 46);
+  };
+  const playRemoteMilestone = (tier = 1) => {
+    playTone(88 + tier * 14, 0.15, 0.016, 'triangle');
+    setTimeout(() => playTerminalClick(118 + tier * 8, 5, 0.0145), 30);
+  };
+  const playRemoteFinalHit = () => {
+    playTone(58, 0.26, 0.02, 'sawtooth');
+    setTimeout(() => playTone(82, 0.2, 0.017, 'square'), 65);
+    setTimeout(() => playTerminalClick(96, 6, 0.018), 40);
   };
 
 
@@ -238,7 +264,54 @@ export default function Home() {
     return () => { clearInterval(progressTimer); clearInterval(statusTimer); };
   }, [showGlobalMap]);
 
-  const isArchiveStage = !showIntro && !showWelcomeVideo && !showGlobalMap;
+  useEffect(() => {
+    if (!showRemoteConnection) return;
+    remoteMilestonesRef.current = new Set();
+    setRemoteStepIndex(0);
+    setRemoteSecured(false);
+    setRemoteProgress({ 'DNS TRACE': 4, 'NODE HANDSHAKE': 2, 'ENCRYPTED TUNNEL': 0, 'RELAY SYNC': 0 });
+    const stepTimer = setInterval(() => {
+      setRemoteStepIndex((prev) => {
+        const next = Math.min(remoteConnectionSteps.length - 1, prev + 1);
+        playRemotePulse(next);
+        if (next === remoteConnectionSteps.length - 1) playRemoteEstablished();
+        return next;
+      });
+    }, 760);
+    const feedTimer = setInterval(() => {
+      setRemoteFeed((prev) => [...prev.slice(-20), makeLogLine(prev.length + 180)]);
+      playTerminalClick(144 + Math.random() * 22, 4, 0.0115);
+    }, 105);
+    const progTimer = setInterval(() => {
+      setRemoteProgress((prev) => ({
+        'DNS TRACE': Math.min(100, prev['DNS TRACE'] + 5),
+        'NODE HANDSHAKE': Math.min(100, prev['NODE HANDSHAKE'] + 6),
+        'ENCRYPTED TUNNEL': Math.min(100, prev['ENCRYPTED TUNNEL'] + 7),
+        'RELAY SYNC': Math.min(100, prev['RELAY SYNC'] + 6)
+      }));
+    }, 180);
+    const doneTimer = setTimeout(() => setRemoteSecured(true), 5200);
+    const exitTimer = setTimeout(() => { setShowRemoteConnection(false); setShowGlobalMap(true); }, 6500);
+    return () => { clearInterval(stepTimer); clearInterval(feedTimer); clearInterval(progTimer); clearTimeout(doneTimer); clearTimeout(exitTimer); };
+  }, [showRemoteConnection]);
+
+  const remoteOverallProgress = useMemo(() => Math.round(Object.values(remoteProgress).reduce((a, b) => a + b, 0) / 4), [remoteProgress]);
+  useEffect(() => {
+    if (!showRemoteConnection) return;
+    const points = [25, 50, 75];
+    points.forEach((point, idx) => {
+      if (remoteOverallProgress >= point && !remoteMilestonesRef.current.has(point)) {
+        remoteMilestonesRef.current.add(point);
+        playRemoteMilestone(idx + 1);
+      }
+    });
+    if (remoteOverallProgress >= 100 && !remoteMilestonesRef.current.has(100)) {
+      remoteMilestonesRef.current.add(100);
+      playRemoteFinalHit();
+    }
+  }, [remoteOverallProgress, showRemoteConnection]);
+
+  const isArchiveStage = !showIntro && !showWelcomeVideo && !showRemoteConnection && !showGlobalMap;
 
   useEffect(() => {
     if (!isArchiveStage) return;
@@ -259,10 +332,11 @@ export default function Home() {
   useEffect(() => {
     if (!audioEnabled) return;
     if (showIntro) return setHumLevel(0.0085, 0.45);
-    if (showWelcomeVideo) return setHumLevel(0.0098, 0.4);
-    if (showGlobalMap) return setHumLevel(0.0115, 0.35);
+    if (showWelcomeVideo) return setHumLevel(0.0118, 0.4);
+    if (showRemoteConnection) return setHumLevel(0.0135, 0.3);
+    if (showGlobalMap) return setHumLevel(0.0148, 0.35);
     setHumLevel(0.0135, 0.55);
-  }, [showIntro, showWelcomeVideo, showGlobalMap, audioEnabled]);
+  }, [showIntro, showWelcomeVideo, showRemoteConnection, showGlobalMap, audioEnabled]);
 
   useEffect(() => {
     if (!showIntro) return;
@@ -379,7 +453,7 @@ export default function Home() {
       welcomeFallbackTimerRef.current = null;
     }
     setShowWelcomeVideo(false);
-    setShowGlobalMap(true);
+    setShowRemoteConnection(true);
     setWelcomeVideoNeedsTap(false);
     setWelcomeVideoExiting(false);
   };
@@ -485,6 +559,45 @@ export default function Home() {
         </section>
       )}
 
+      {showRemoteConnection && (
+        <section className="remote-connection-overlay" aria-live="polite">
+          <header>
+            <h1>ESTABLISHING REMOTE CONNECTION</h1>
+            <p>Victor Archive offshore relay network</p>
+            <p className="remote-ip">LOCAL NODE 192.168.77.01 → OFFSHORE RELAY 10.44.9.14</p>
+          </header>
+          <div className="remote-layout">
+            <div className="remote-terminal-feed">
+              {remoteFeed.slice(-16).map((line, idx) => <p key={`rf-${idx}`}>{line}</p>)}
+              {remoteConnectionSteps.map((step, idx) => <p key={step} className={idx <= remoteStepIndex ? 'on' : ''}>{idx <= remoteStepIndex ? '>' : '.'} {step}</p>)}
+              <p className="remote-cursor">█</p>
+            </div>
+            <div className={`remote-host-panel ${remoteSecured ? 'online' : ''}`}>
+              <div className={`rack stage-${remoteOverallProgress >= 80 ? 'lock' : remoteOverallProgress >= 50 ? 'build' : remoteOverallProgress >= 20 ? 'align' : 'chaos'}`}>
+                <div className="viz-ring ring-a" />
+                <div className="viz-ring ring-b" />
+                <div className="viz-ring ring-c" />
+                <div className="viz-sweep" />
+                <div className="viz-grid" />
+                <div className="viz-triangle tri-a" />
+                <div className="viz-triangle tri-b" />
+                <div className="viz-core" />
+                <div className="viz-orbit o1" />
+                <div className="viz-orbit o2" />
+                <div className="viz-orbit o3" />
+                <div className="viz-glyphs">Ξ Δ 7A VX 9F ∑</div>
+              </div>
+              <p>REMOTE HOST NODE 14</p>
+              <span>{remoteSecured ? 'LINK STABLE' : `ASSEMBLING ${remoteOverallProgress}%`}</span>
+            </div>
+          </div>
+          <div className="remote-bars">
+            {Object.entries(remoteProgress).map(([k, v]) => <div key={k}><label>{k}</label><div className="progress-track"><div className="progress-fill" style={{ width: `${v}%` }} /></div></div>)}
+          </div>
+          {remoteSecured && <div className="remote-secured">REMOTE HOST VERIFIED<br />CONNECTION ESTABLISHED<br />LOADING GLOBAL NODE MAP...</div>}
+        </section>
+      )}
+
       {showGlobalMap && (
         <section className="map-overlay" aria-live="polite">
           <header className="map-hero">
@@ -532,7 +645,7 @@ export default function Home() {
         </section>
       )}
 
-      {!showIntro && !showWelcomeVideo && !showGlobalMap && <section className="vault-panel">{/* unchanged main access screen */}
+      {!showIntro && !showWelcomeVideo && !showRemoteConnection && !showGlobalMap && <section className="vault-panel">{/* unchanged main access screen */}
         <header className="hero glitch" data-text="VICTOR ARCHIVE"><h1>VICTOR ARCHIVE</h1><p>SECURE INHERITANCE VAULT</p></header>
         <div className="grid-wrap"><div className="boot-module module"><h2>BOOT SEQUENCE</h2><div className="boot-feed">{bootFeed.map((line) => <p key={line}>{line}</p>)}</div></div><div className="handshake module"><h2>ENCRYPTED NODE HANDSHAKE</h2><div className="progress-track"><div className="progress-fill" style={{ width: `${handshake}%` }} /></div><span>{handshake}% COMPLETE</span></div><div className="nfc module gated-module" data-visible={handshakeComplete}><h2>NFC TOKEN DETECTED</h2><p className="tag">AUTH CHIP: V-A7-SAM-KEY</p><p className="tag">SIGNAL INTEGRITY: 99.7%</p><p className="tag">LOCATION LOCK: OFFSHORE NODE 14</p></div><div className="auth module gated-module" data-visible={handshakeComplete}><h2>ACCESS PHRASE</h2><form onSubmit={handleSubmit}><input value={password} onChange={(e) => setPassword(e.target.value.toUpperCase())} placeholder="ENTER PASSWORD" type="password" autoComplete="off" spellCheck="false" /><button type="submit">INITIATE FACIAL SCAN</button></form><div className={`face-scan ${scanning ? 'active' : ''}`}><div className="scan-beam" /><span>{scanning ? `FACIAL RECOGNITION ${scanProgress}%` : 'FACIAL RECOGNITION STANDBY'}</span></div>{status === 'granted' && <p className="result granted">ACCESS GRANTED</p>}{status === 'denied' && <p className="result denied">ACCESS DENIED</p>}</div></div>
         {status === 'granted' && <section className="dashboard module"><h2>ARCHIVE DASHBOARD</h2><ul><li><span>Inheritance File</span><strong>LOCKED</strong></li><li><span>Offshore Accounts</span><strong>ENCRYPTED</strong></li><li><span>Criminal Ledger</span><strong>CLASSIFIED</strong></li><li><span>Biometric Key</span><strong>SAM REQUIRED</strong></li></ul></section>}
