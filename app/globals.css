@@ -256,6 +256,53 @@ button:hover { filter: brightness(1.15); }
   transition: opacity 650ms ease, visibility 650ms ease;
 }
 
+.remote-connection-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  background: radial-gradient(circle at 50% 20%, rgba(18, 34, 54, 0.35), rgba(0, 0, 0, 0.98) 60%);
+  padding: clamp(0.8rem, 2vw, 1.4rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.remote-connection-overlay h1 { margin: 0; letter-spacing: 0.15rem; font-size: clamp(1.1rem, 2.8vw, 2rem); }
+.remote-connection-overlay p { margin: 0.15rem 0; color: #98d9ff; }
+.remote-ip { color: #80ffd4; letter-spacing: 0.08rem; font-size: 0.82rem; }
+.remote-layout { display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 0.8rem; min-height: 45vh; }
+.remote-terminal-feed {
+  border: 1px solid rgba(124, 251, 232, 0.36);
+  background: rgba(0, 8, 15, 0.9);
+  padding: 0.7rem;
+  overflow: hidden;
+  font-size: 0.78rem;
+}
+.remote-terminal-feed p { margin: 0.2rem 0; opacity: 0.55; }
+.remote-terminal-feed p.on { opacity: 1; color: #b8fff2; text-shadow: 0 0 8px rgba(124, 251, 232, 0.4); }
+.remote-cursor { animation: blink 0.75s steps(1) infinite; color: #9effef; }
+.remote-host-panel {
+  border: 1px solid rgba(69, 168, 255, 0.3);
+  background: rgba(0, 8, 20, 0.9);
+  display: grid;
+  place-items: center;
+}
+.remote-host-panel .rack {
+  width: min(220px, 68%);
+  aspect-ratio: 1/1;
+  border: 1px solid rgba(93, 212, 255, 0.45);
+  background: linear-gradient(180deg, rgba(2, 35, 55, 0.7), rgba(0, 8, 15, 0.8));
+  box-shadow: inset 0 0 18px rgba(90, 190, 255, 0.25);
+}
+.remote-host-panel.online .rack { box-shadow: inset 0 0 28px rgba(100, 255, 193, 0.45), 0 0 24px rgba(96, 255, 201, 0.2); }
+.remote-bars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem 0.8rem; }
+.remote-bars label { display: block; font-size: 0.75rem; margin-bottom: 0.2rem; letter-spacing: 0.08rem; }
+.remote-secured { text-align: center; font-size: clamp(1rem, 2.6vw, 1.4rem); color: #9dffdf; letter-spacing: 0.13rem; }
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@media (max-width: 820px) {
+  .remote-layout { grid-template-columns: 1fr; min-height: 56vh; }
+  .remote-bars { grid-template-columns: 1fr; }
+}
+
 .intro-shell {
   width: min(1000px, 100%);
   height: min(94vh, 760px);
