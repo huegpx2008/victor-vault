@@ -90,6 +90,7 @@ export default function Home() {
   const humRef = useRef(null);
   const welcomeFallbackTimerRef = useRef(null);
   const welcomeVideoRef = useRef(null);
+  const remoteMilestonesRef = useRef(new Set());
 
   const playTone = (frequency = 540, duration = 0.06, gainValue = 0.03, type = 'sine') => {
     const ctx = audioCtxRef.current;
@@ -155,6 +156,15 @@ export default function Home() {
     setTimeout(() => playTone(116, 0.14, 0.014, 'square'), 70);
     setTimeout(() => playTone(162, 0.16, 0.013, 'triangle'), 130);
     setTimeout(() => playTerminalClick(122, 5, 0.0165), 46);
+  };
+  const playRemoteMilestone = (tier = 1) => {
+    playTone(88 + tier * 14, 0.15, 0.016, 'triangle');
+    setTimeout(() => playTerminalClick(118 + tier * 8, 5, 0.0145), 30);
+  };
+  const playRemoteFinalHit = () => {
+    playTone(58, 0.26, 0.02, 'sawtooth');
+    setTimeout(() => playTone(82, 0.2, 0.017, 'square'), 65);
+    setTimeout(() => playTerminalClick(96, 6, 0.018), 40);
   };
 
 
@@ -256,6 +266,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!showRemoteConnection) return;
+    remoteMilestonesRef.current = new Set();
     setRemoteStepIndex(0);
     setRemoteSecured(false);
     setRemoteProgress({ 'DNS TRACE': 4, 'NODE HANDSHAKE': 2, 'ENCRYPTED TUNNEL': 0, 'RELAY SYNC': 0 });
@@ -283,6 +294,22 @@ export default function Home() {
     const exitTimer = setTimeout(() => { setShowRemoteConnection(false); setShowGlobalMap(true); }, 6500);
     return () => { clearInterval(stepTimer); clearInterval(feedTimer); clearInterval(progTimer); clearTimeout(doneTimer); clearTimeout(exitTimer); };
   }, [showRemoteConnection]);
+
+  const remoteOverallProgress = useMemo(() => Math.round(Object.values(remoteProgress).reduce((a, b) => a + b, 0) / 4), [remoteProgress]);
+  useEffect(() => {
+    if (!showRemoteConnection) return;
+    const points = [25, 50, 75];
+    points.forEach((point, idx) => {
+      if (remoteOverallProgress >= point && !remoteMilestonesRef.current.has(point)) {
+        remoteMilestonesRef.current.add(point);
+        playRemoteMilestone(idx + 1);
+      }
+    });
+    if (remoteOverallProgress >= 100 && !remoteMilestonesRef.current.has(100)) {
+      remoteMilestonesRef.current.add(100);
+      playRemoteFinalHit();
+    }
+  }, [remoteOverallProgress, showRemoteConnection]);
 
   const isArchiveStage = !showIntro && !showWelcomeVideo && !showRemoteConnection && !showGlobalMap;
 
@@ -546,15 +573,28 @@ export default function Home() {
               <p className="remote-cursor">█</p>
             </div>
             <div className={`remote-host-panel ${remoteSecured ? 'online' : ''}`}>
-              <div className="rack" />
+              <div className={`rack stage-${remoteOverallProgress >= 80 ? 'lock' : remoteOverallProgress >= 50 ? 'build' : remoteOverallProgress >= 20 ? 'align' : 'chaos'}`}>
+                <div className="viz-ring ring-a" />
+                <div className="viz-ring ring-b" />
+                <div className="viz-ring ring-c" />
+                <div className="viz-sweep" />
+                <div className="viz-grid" />
+                <div className="viz-triangle tri-a" />
+                <div className="viz-triangle tri-b" />
+                <div className="viz-core" />
+                <div className="viz-orbit o1" />
+                <div className="viz-orbit o2" />
+                <div className="viz-orbit o3" />
+                <div className="viz-glyphs">Ξ Δ 7A VX 9F ∑</div>
+              </div>
               <p>REMOTE HOST NODE 14</p>
-              <span>{remoteSecured ? 'LINK STABLE' : 'INITIALIZING'}</span>
+              <span>{remoteSecured ? 'LINK STABLE' : `ASSEMBLING ${remoteOverallProgress}%`}</span>
             </div>
           </div>
           <div className="remote-bars">
             {Object.entries(remoteProgress).map(([k, v]) => <div key={k}><label>{k}</label><div className="progress-track"><div className="progress-fill" style={{ width: `${v}%` }} /></div></div>)}
           </div>
-          {remoteSecured && <div className="remote-secured">CONNECTION SECURED<br />LOADING GLOBAL NODE MAP...</div>}
+          {remoteSecured && <div className="remote-secured">REMOTE HOST VERIFIED<br />CONNECTION ESTABLISHED<br />LOADING GLOBAL NODE MAP...</div>}
         </section>
       )}
 
